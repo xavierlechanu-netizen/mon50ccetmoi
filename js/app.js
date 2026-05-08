@@ -213,7 +213,7 @@ window.initMapController = function() {
 window.startApp = function() {
     if (window.appStarted) return;
     window.appStarted = true;
-    console.log("mon50cc Master Controller : Démarrage de la séquence d'initialisation v26.1...");
+    console.log("mon50cc Master Controller : Démarrage de la séquence d'initialisation v50.0.17-ULTIMATE...");
     runCinematicStartup();
     
     checkTrialExpiration();
