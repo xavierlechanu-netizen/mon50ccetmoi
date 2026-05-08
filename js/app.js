@@ -88,7 +88,7 @@ history.pushState(null, null, window.location.pathname);
 // escapeHTML est maintenant défini dans auth.js (global)
 
 // --- BOOT ---
-console.log("mon50ccetmoi v50000.13-GOLD-STABLE : Production Ready.");
+console.log("mon50ccetmoi v50.0.17-ULTIMATE : Production Ready.");
 
 let map;
 let directionsService;
@@ -213,38 +213,56 @@ window.initMapController = function() {
 window.startApp = function() {
     if (window.appStarted) return;
     window.appStarted = true;
+    console.log("mon50cc Master Controller : Démarrage de la séquence d'initialisation v26.1...");
+    runCinematicStartup();
     
-    console.log("mon50cc : Initialisation globale...");
+    checkTrialExpiration();
+    updateUILabels();
+    if(window.session && document.getElementById('mileage-hud')) {
+        document.getElementById('mileage-hud').textContent = `${(window.session.totalDistance || 0).toFixed(1)} KM`;
+    }
     
-    try {
-        // Initialisation sécurisée des modules
-        if (window.NeuralHUD && typeof window.NeuralHUD.init === "function") window.NeuralHUD.init();
-        if (window.GuardianAngel && typeof window.GuardianAngel.init === "function") window.GuardianAngel.init();
-        if (window.NeuralSync && typeof window.NeuralSync.init === "function") window.NeuralSync.init();
-        if (window.Wallet && typeof window.Wallet.init === "function") window.Wallet.init();
-        
+    loadHazards();
+    renderRoadbooks();
+    if (window.OracleVoice) window.OracleVoice.start();
+    
+    // Check Parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('shortcut')) {
+        const sc = urlParams.get('shortcut');
+        setTimeout(() => {
+            if (sc === 'garage') showPage('garage');
+            if (sc === 'danger') toggleHazardMenu();
+        }, 1000);
+    }
+
+    // Hide Loader gracefully
+    setTimeout(() => {
         const loader = document.getElementById('app-loader');
-        if (loader) {
-            loader.style.opacity = '0';
-            setTimeout(() => loader.style.visibility = 'hidden', 800);
+        if(loader) { 
+            loader.style.opacity = '0'; 
+            setTimeout(() => {
+                loader.style.visibility = 'hidden';
+                speak("Systèmes opérationnels. Bonne route sur mon 50cc et moi.");
+            }, 800); 
         }
-
-        // --- GUEST MODE BANNER ---
-        if (window.session && window.session.isGuest) {
-            const guestBanner = document.getElementById('guest-banner');
-            if (guestBanner) guestBanner.classList.remove('hidden');
+        updateUILabels();
+        if (typeof renderCommunityMarkers === "function") renderCommunityMarkers(); 
+        if (typeof simulateLiveFleet === "function") simulateLiveFleet();
+        console.log("mon50cc : Système prêt.");
+        
+        // Notification de Mise à Jour v25.01
+        if(!localStorage.getItem('v25_01_notified')) {
+            setTimeout(() => {
+                speak("Mise à jour Silver Edition installée. Découvrez le nouveau Sentinel Météo et le HUD optimisé.");
+                alert("🥈 MON50CC SILVER EDITION 🥈\n\n- Sentinel Météo : Alertes vocales en cas de pluie.\n- HUD Silver : Interface optimisée pour la vision nocturne.\n- Sécurité : Détecteur de chute 2.0 calibré.");
+                localStorage.setItem('v25_01_notified', 'true');
+            }, 5000);
         }
+    }, 3500); // Wait for cinematic sequence
 
-    } catch (e) {
-        console.error("App startup bug prevented:", e);
-    }
-    
-    // Lancement de la géolocalisation de manière garantie
-    try {
-        checkLegalConsent();
-    } catch (e) {
-        console.error("Geolocation init failed:", e);
-    }
+    // Lancement de la géolocalisation
+    checkLegalConsent();
 };
 
 // Fonctions de menu déplacées au début pour sécurité
@@ -1820,62 +1838,6 @@ function runCinematicStartup() {
     }, 2000);
 }
 
-window.startApp = function() {
-    if (window.appStarted) return;
-    window.appStarted = true;
-    console.log("mon50cc Master Controller : Démarrage de la séquence d'initialisation v26.1...");
-    runCinematicStartup();
-    
-    const statusEl = document.getElementById('loader-status');
-    
-    // Note: initMap() est désormais appelé directement par le callback Google Maps SDK
-    
-    checkTrialExpiration();
-    updateUILabels();
-    if(window.session && document.getElementById('mileage-hud')) {
-        document.getElementById('mileage-hud').textContent = `${(window.session.totalDistance || 0).toFixed(1)} KM`;
-    }
-    
-    loadHazards();
-    renderRoadbooks();
-    if (window.OracleVoice) window.OracleVoice.start();
-    updatePosition({ coords: { latitude: 48.8566, longitude: 2.3522, speed: 0, accuracy: 10 } });
-    
-    // Check Parameters
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.has('shortcut')) {
-        const sc = urlParams.get('shortcut');
-        setTimeout(() => {
-            if (sc === 'garage') showPage('garage');
-            if (sc === 'danger') toggleHazardMenu();
-        }, 1000);
-    }
-
-    // Hide Loader gracefully
-    setTimeout(() => {
-        const loader = document.getElementById('app-loader');
-        if(loader) { 
-            loader.style.opacity = '0'; 
-            setTimeout(() => {
-                loader.style.visibility = 'hidden';
-                speak("Systèmes opérationnels. Bonne route sur mon 50cc et moi.");
-            }, 800); 
-        }
-        updateUILabels();
-        if (typeof renderCommunityMarkers === "function") renderCommunityMarkers(); 
-        if (typeof simulateLiveFleet === "function") simulateLiveFleet();
-        console.log("mon50cc : Système prêt.");
-        
-        // Notification de Mise à Jour v25.01
-        if(!localStorage.getItem('v25_01_notified')) {
-            setTimeout(() => {
-                speak("Mise à jour Silver Edition installée. Découvrez le nouveau Sentinel Météo et le HUD optimisé.");
-                alert("🥈 MON50CC SILVER EDITION 🥈\n\n- Sentinel Météo : Alertes vocales en cas de pluie.\n- HUD Silver : Interface optimisée pour la vision nocturne.\n- Sécurité : Détecteur de chute 2.0 calibré.");
-                localStorage.setItem('v25_01_notified', 'true');
-            }, 5000);
-        }
-    }, 3500); // Wait for cinematic sequence
-};
 
 // Fail-safe Loader removal (after 5s)
 setTimeout(() => {
@@ -1891,10 +1853,7 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log("DOM Prêt. En attente du SDK Maps...");
 });
 
-window.toggleMenu = function() {
-    const s = document.getElementById('sidebar');
-    s.classList.toggle('sidebar-hidden');
-}
+// Duplicate toggleMenu removed to avoid conflicts with global implementation at line 2.
 
 window.closeScreen = function() {
     document.getElementById('screen-overlay').classList.add('hidden');

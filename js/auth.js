@@ -77,39 +77,14 @@ window.escapeHTML = function(str) {
 window.login = async function(username, password) {
     if (!username || !password) return alert("Identifiants manquants.");
 
-    // --- GOOGLE REVIEW BYPASS (PLAY STORE EXAM) ---
-    if (username === "GoogleReview" && password === "PlayStore-2026!") {
-        const reviewSession = {
-            uid: "google_reviewer_account",
-            username: "Google_Tester",
-            role: "user",
-            registrationDate: Date.now(),
-            isPremium: true,
-            isGold: true,
-            points: 5000,
-            brand: "Google",
-            model: "Bot-1"
-        };
-        secureSetItem('session', JSON.stringify(reviewSession));
-        window.session = reviewSession;
-        window.location.href = 'index.html';
+    // --- PRODUCTION REVIEW BYPASS (ENV CONTROLLED) ---
+    // Note: Use environment-specific flags or a secure backend check for Play Store review.
+    const isReviewMode = localStorage.getItem('PROD_REVIEW_BYPASS') === 'true'; 
+    if (isReviewMode && username === "Reviewer" && password === "Secured-2026!") {
+        // ... Review logic
         return;
     }
-    
-    // --- ADMIN BACKDOOR ---
-    if (username.toLowerCase() === "chezbigboo" && password === "Timeo@2022") {
-        const adminSession = {
-            uid: "admin_master_001",
-            username: "Commandant ChezBigBoo",
-            role: "admin",
-            registrationDate: Date.now(),
-            isFoundingMember: true
-        };
-        secureSetItem('session', JSON.stringify(adminSession));
-        window.session = adminSession;
-        window.location.href = 'admin.html';
-        return;
-    }
+
 
     // Pour compatibilité avec l'ancien système de pseudos, on utilise un email fictif
     const email = username.includes('@') ? username : `${username.toLowerCase()}@mon50cc.internal`;
@@ -137,20 +112,8 @@ window.login = async function(username, password) {
 window.register = async function(username, password, brand, model) {
     if (!username || !password) return alert("Veuillez remplir tous les champs.");
     
-    // --- ADMIN BACKDOOR (Interception de la création) ---
-    if (username.toLowerCase() === "chezbigboo" && password === "Timeo@2022") {
-        const adminSession = {
-            uid: "admin_master_001",
-            username: "Commandant ChezBigBoo",
-            role: "admin",
-            registrationDate: Date.now(),
-            isFoundingMember: true
-        };
-        secureSetItem('session', JSON.stringify(adminSession));
-        window.session = adminSession;
-        window.location.href = 'admin.html';
-        return;
-    }
+    // --- REGISTRATION SECURITY ---
+
 
     if (!brand || !model) return alert("Veuillez renseigner votre véhicule.");
 

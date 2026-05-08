@@ -54,10 +54,14 @@ self.addEventListener('fetch', (event) => {
         if (event.request.url.includes('googleapis') || event.request.url.includes('gstatic')) {
            return networkResponse; 
         }
-        return caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, networkResponse.clone());
-          return networkResponse;
-        });
+        // ONLY cache GET requests
+        if (event.request.method === 'GET') {
+          return caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, networkResponse.clone());
+            return networkResponse;
+          });
+        }
+        return networkResponse;
       });
     }).catch(() => {
       // Offline fallback

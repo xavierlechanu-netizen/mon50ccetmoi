@@ -22,7 +22,13 @@ window.Blackbox = {
     },
 
     push: function(data) {
-        // ... (Keep existing push)
+        this.buffer.push({
+            ts: Date.now(),
+            ...data
+        });
+        if (this.buffer.length > this.maxEntries) {
+            this.buffer.shift();
+        }
     },
 
     pushHf: function(motionData) {
