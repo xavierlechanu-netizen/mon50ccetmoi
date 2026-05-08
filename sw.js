@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mon50ccetmoi-v50.0.17-MAX-STABLE';
+const CACHE_NAME = 'mon50ccetmoi-v50017-ULTIMATE';
 const ASSETS = [
   './',
   './index.html',
@@ -15,6 +15,7 @@ const ASSETS = [
   './js/sentinel-v2.js',
   './js/ghost-rider-v2.js',
   './js/i18n.js',
+  './js/telemetry.js',
   './manifest.json',
   './assets/icons/icon-192x192.png',
   './assets/icons/icon-512x512.png'

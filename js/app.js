@@ -236,30 +236,21 @@ window.startApp = function() {
         }, 1000);
     }
 
-    // Hide Loader gracefully
+    // Masquer le loader + marquer le système comme prêt
     setTimeout(() => {
         const loader = document.getElementById('app-loader');
-        if(loader) { 
-            loader.style.opacity = '0'; 
+        if (loader) {
+            loader.style.opacity = '0';
             setTimeout(() => {
                 loader.style.visibility = 'hidden';
                 speak("Systèmes opérationnels. Bonne route sur mon 50cc et moi.");
-            }, 800); 
+            }, 800);
         }
         updateUILabels();
-        if (typeof renderCommunityMarkers === "function") renderCommunityMarkers(); 
+        if (typeof renderCommunityMarkers === "function") renderCommunityMarkers();
         if (typeof simulateLiveFleet === "function") simulateLiveFleet();
-        console.log("mon50cc : Système prêt.");
-        
-        // Notification de Mise à Jour v25.01
-        if(!localStorage.getItem('v25_01_notified')) {
-            setTimeout(() => {
-                speak("Mise à jour Silver Edition installée. Découvrez le nouveau Sentinel Météo et le HUD optimisé.");
-                alert("🥈 MON50CC SILVER EDITION 🥈\n\n- Sentinel Météo : Alertes vocales en cas de pluie.\n- HUD Silver : Interface optimisée pour la vision nocturne.\n- Sécurité : Détecteur de chute 2.0 calibré.");
-                localStorage.setItem('v25_01_notified', 'true');
-            }, 5000);
-        }
-    }, 3500); // Wait for cinematic sequence
+        console.log("mon50cc v50.0.17-ULTIMATE : Système prêt.");
+    }, 3500);
 
     // Lancement de la géolocalisation
     checkLegalConsent();
@@ -348,9 +339,31 @@ async function checkLegalConsent() {
 }
 
 function startGeolocation() {
-    if ('geolocation' in navigator) {
-        navigator.geolocation.watchPosition(updatePosition, (e) => console.warn(e), { enableHighAccuracy: true });
+    if (!('geolocation' in navigator)) {
+        console.error("mon50cc GPS : Géolocalisation non supportée sur cet appareil.");
+        return;
     }
+
+    const geoOptions = {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 0
+    };
+
+    const onError = (err) => {
+        let msg = "Erreur GPS inconnue";
+        if (err.code === 1) msg = "Permission GPS refusée. Autorise la localisation dans les réglages.";
+        if (err.code === 2) msg = "Position GPS indisponible (signal faible).";
+        if (err.code === 3) msg = "Timeout GPS : aucune position reçue.";
+        console.error("mon50cc GPS : " + msg, err);
+        // Retry with low accuracy after failure
+        setTimeout(() => {
+            navigator.geolocation.watchPosition(updatePosition, (e) => console.warn("GPS low-acc fallback:", e), { enableHighAccuracy: false, timeout: 30000 });
+        }, 3000);
+    };
+
+    navigator.geolocation.watchPosition(updatePosition, onError, geoOptions);
+    console.log("mon50cc GPS : Surveillance haute précision démarrée.");
 }
 
 // Remplacement du démarrage automatique par la vérification légale
