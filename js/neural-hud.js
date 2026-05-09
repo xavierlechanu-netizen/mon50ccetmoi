@@ -280,6 +280,8 @@ window.NeuralHUD = {
 
     startNeuralLoop: function() {
         window.addEventListener('deviceorientation', (e) => {
+            // Désactivé : Empêche le HUD et le radar de "bouger tout seul" de façon erratique avec le gyroscope
+            /*
             const hud = document.getElementById('hud');
             const radar = document.getElementById('radar-sweep');
             const lean = Math.round(e.gamma);
@@ -291,6 +293,7 @@ window.NeuralHUD = {
             if (radar) {
                 radar.style.transform = `translate(-50%, -50%) rotate(${lean * 2}deg) scale(${1 + Math.abs(e.beta/90)})`;
             }
+            */
         });
 
         setInterval(() => {

@@ -4,5 +4,5 @@ set ANDROID_HOME=C:\Users\xavie\AppData\Local\Android\Sdk
 set PATH=%JAVA_HOME%\bin;%PATH%
 set GRADLE_OPTS=-Xmx384m -XX:MaxMetaspaceSize=128m
 
-echo [INFO] Lancement de la compilation v50.0.15 (Mode Basse Memoire)...
+echo [INFO] Lancement de la compilation v50.0.17 (ULTIMATE) (Mode Basse Memoire)...
 call gradlew bundleRelease --no-daemon

@@ -481,6 +481,9 @@ function updatePosition(position) {
             document.getElementById('compass-dir').textContent = dirs[dirIdx];
             
             // AUTO-ROTATE MAP (Navigation Mode)
+            if (window.isRiding && map) {
+                map.setHeading(heading);
+            }
         }
 
         // DYNAMIC MAP INTELLIGENCE (Auto-Zoom & Tilt)

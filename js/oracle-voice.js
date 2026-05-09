@@ -55,6 +55,17 @@ class OracleVoice {
     stop() {
         this.active = false;
         if (this.recognition) this.recognition.stop();
+        console.log("Oracle Voice Engine : [ OFFLINE ]");
+    }
+
+    toggle() {
+        if (this.active) {
+            this.stop();
+            speak("Reconnaissance vocale désactivée.");
+        } else {
+            this.start();
+            speak("Reconnaissance vocale activée.");
+        }
     }
 
     updateLanguage() {

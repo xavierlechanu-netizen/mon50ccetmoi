@@ -12,7 +12,7 @@ window.Telemetry = {
         console.log("📡 Telemetry Engine: Initializing diagnostics...");
         this.createHUD();
         this.hijackConsole();
-        this.trackGps();
+        // this.trackGps(); // Désactivé temporairement pour éviter les conflits GPS avec app.js
         this.trackPerformance();
         
         // Auto-refresh UI
