@@ -323,9 +323,15 @@ async function checkLegalConsent() {
             Les données sont chiffrées et vous pouvez supprimer votre compte à tout moment. En continuant, vous acceptez notre <a href="privacy.html" target="_blank" style="color:#ffb703;">politique de confidentialité</a>.
         </p>
         <button id="btn-accept-legal" style="width:100%; padding:15px; background:#ffb703; color:black; border:none; border-radius:30px; font-weight:bold; font-size:1rem; margin-bottom:10px;">ACCEPTER ET CONTINUER</button>
-        <button onclick="window.close()" style="background:transparent; border:none; color:#666; font-size:0.8rem; text-decoration:underline;">Quitter l'application</button>
+        <button onclick="window.close()" style="background:transparent; border:none; color:#666; font-size:0.8rem; text-decoration:underline;" id="btn-refuse-legal">Refuser et quitter</button>
     `;
     document.body.appendChild(modal);
+
+    // Bouton Refus : masque le modal (window.close() ne marche pas sur mobile)
+    document.getElementById('btn-refuse-legal').onclick = () => {
+        modal.style.display = 'none';
+        speak("L'application nécessite votre accord pour fonctionner.");
+    };
 
     document.getElementById('btn-accept-legal').onclick = () => {
         localStorage.setItem('legal_consent_accepted', 'true');
@@ -1142,13 +1148,28 @@ window.cancelRoute = function() {
 
 window.searchDestination = function() {
     const query = document.getElementById('route-search').value;
-    if(!query || !currentPosition || !geocoder) return;
+    if (!query) return;
+    if (!geocoder || !map) {
+        speak("Carte en cours de chargement, veuillez patienter.");
+        const btn = document.querySelector('#search-container button');
+        if (btn) { btn.style.animation = 'pulse-red 0.5s 2'; setTimeout(() => btn.style.animation = '', 1000); }
+        return;
+    }
+    if (!currentPosition) {
+        speak("Position GPS en cours d'acquisition. Réessayez dans quelques secondes.");
+        return;
+    }
     geocoder.geocode({ address: query }, (res, status) => {
-        if(status === "OK") {
+        if (status === "OK") {
             const dest = res[0].geometry.location;
             calculateRouteSansAutoroute(currentPosition, dest);
             map.panTo(dest);
-        } else { alert("Inconnu: " + status); }
+            // Afficher le bouton d'annulation
+            const btnCancel = document.getElementById('btn-cancel-route');
+            if (btnCancel) btnCancel.classList.remove('hidden');
+        } else {
+            speak("Destination introuvable : " + query);
+        }
     });
 }
 
