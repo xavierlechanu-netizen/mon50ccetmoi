@@ -1152,6 +1152,11 @@ checkNightMode();
 let destinationMarker = null;
 
 function calculateRouteSansAutoroute(start, end) {
+    if (!start || !end) {
+        console.error("mon50cc Maps : Points de départ ou d'arrivée invalides.", {start, end});
+        if (!start) speak("Signal GPS insuffisant pour démarrer l'itinéraire.");
+        return;
+    }
     const request = {
         origin: start,
         destination: end,
