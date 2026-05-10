@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mon50ccetmoi-v50017-ULTIMATE';
+const CACHE_NAME = 'mon50ccetmoi-v50020-ULTIMATE';
 const ASSETS = [
   './',
   './index.html',
@@ -64,11 +64,12 @@ self.addEventListener('fetch', (event) => {
         }
         return networkResponse;
       });
-    }).catch(() => {
+    }).catch((err) => {
       // Offline fallback
       if (event.request.mode === 'navigate') {
         return caches.match('./index.html');
       }
+      return new Response('Network error occurred', { status: 408, statusText: 'Request Timeout' });
     })
   );
 });

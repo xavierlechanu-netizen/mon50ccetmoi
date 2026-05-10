@@ -268,10 +268,6 @@ window.closeAdvantages = function() {
     if (pop) pop.classList.add('hidden');
 };
 
-window.initMap = function() {
-    window.initMapController();
-};
-
 
 window.toggleTraffic = function() {
     if (trafficLayer.getMap()) {
@@ -424,6 +420,12 @@ function updatePosition(position) {
 
     currentPosition = { lat, lng };
     if (window.OracleEngine) window.OracleEngine.updateRegion(lat, lng);
+
+    // Update Telemetry HUD if active
+    if (window.Telemetry) {
+        const gpsStatus = document.getElementById('tel-gps');
+        if (gpsStatus) gpsStatus.textContent = `FIX (${accuracy.toFixed(1)}m)`;
+    }
     
     // --- GUEST MODE LOCKS (Initial logic check) ---
     if (window.session && window.session.isGuest) {
@@ -2773,6 +2775,7 @@ document.body.classList.remove('holographic-mode');
 // Si le SDK Maps est déjà là, on lance manuellement
 if (typeof google !== 'undefined' && google.maps) {
     console.log("mon50cc : SDK Maps déjà présent. Démarrage immédiat.");
+    window.mapsSDKLoaded = true;
     if (typeof window.initMapController === "function") {
         window.initMapController();
     }
