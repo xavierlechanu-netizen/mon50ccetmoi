@@ -247,17 +247,17 @@
                 <span class="tactical-speed-unit">km/h</span>
             </div>
 
-            <!-- SEARCH (Integrated & Opaque) -->
-            <div id="search-container" style="flex: 1; max-width: 400px; margin-top: 5px; z-index: 10000;">
-                <div class="search-bar" style="display: flex; flex-direction: column; align-items: stretch; padding: 6px 12px; border-radius: 15px; border: 1px solid rgba(0, 210, 255, 0.4); background: #111; box-shadow: 0 4px 15px rgba(0,0,0,0.8);">
-                    <div id="manual-start-box" style="width: 100%; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 4px; padding-bottom: 2px; display: flex; align-items: center;">
-                        <i class="fa-solid fa-circle-dot" style="color: var(--neon-blue); margin-right: 8px; font-size: 0.6rem;"></i>
-                        <input type="text" id="route-start" placeholder="D&eacute;part (GPS)..." style="font-size: 0.75rem; color: #fff; background: transparent; border: none; width: 100%; outline: none;">
+            <!-- SEARCH (Integrated & Cleaned) -->
+            <div id="search-container" style="flex: 1; max-width: 450px; margin-top: 5px; z-index: 10000;">
+                <div style="display: flex; flex-direction: column; align-items: stretch; padding: 10px; border-radius: 15px; background: #111; border: 1px solid rgba(0, 210, 255, 0.5); box-shadow: 0 4px 20px rgba(0,0,0,0.9);">
+                    <div id="manual-start-box" style="width: 100%; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 6px; padding-bottom: 4px; display: flex; align-items: center;">
+                        <i class="fa-solid fa-circle-dot" style="color: var(--neon-blue); margin-right: 10px; font-size: 0.7rem;"></i>
+                        <input type="text" id="route-start" placeholder="D&eacute;part (GPS)..." style="font-size: 0.85rem; color: #fff; background: transparent; border: none; width: 100%; outline: none;">
                     </div>
                     <div style="display: flex; width: 100%; align-items: center;">
-                        <i class="fa-solid fa-location-dot" style="color: #ffb703; margin-right: 8px; font-size: 0.8rem;"></i>
-                        <input type="text" id="route-search" placeholder="Destination..." style="font-size: 0.8rem; color: #fff; background: transparent; border: none; width: 100%; outline: none;">
-                        <button onclick="searchDestination()" style="background: var(--neon-blue); color: black; border-radius: 50%; width: 28px; height: 28px; min-width: 28px; display: flex; align-items: center; justify-content: center; margin-left: 5px; box-shadow: 0 0 5px var(--neon-blue);"><i class="fa-solid fa-chevron-right" style="font-size: 0.7rem;"></i></button>
+                        <i class="fa-solid fa-location-dot" style="color: #ffb703; margin-right: 10px; font-size: 0.9rem;"></i>
+                        <input type="text" id="route-search" placeholder="Destination..." style="font-size: 0.9rem; color: #fff; background: transparent; border: none; width: 100%; outline: none;">
+                        <button onclick="searchDestination()" style="background: var(--neon-blue); color: black; border-radius: 50%; width: 32px; height: 32px; min-width: 32px; display: flex; align-items: center; justify-content: center; margin-left: 8px; box-shadow: 0 0 8px var(--neon-blue);"><i class="fa-solid fa-chevron-right" style="font-size: 0.8rem;"></i></button>
                     </div>
                 </div>
             </div>
