@@ -334,16 +334,19 @@
     </div>
 
     <div id="search-container">
-        <div class="search-bar glassmorphism">
-            <div id="manual-start-box" class="hidden" style="width: 100%; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 5px;">
-                <input type="text" id="route-start" placeholder="DÃ©part (Ma position)..." style="font-size: 0.8rem; color: var(--neon-blue);">
+        <div class="search-bar glassmorphism" style="flex-direction: column; align-items: stretch; padding: 10px;">
+            <div id="manual-start-box" style="width: 100%; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 8px; padding-bottom: 5px; display: flex; align-items: center;">
+                <i class="fa-solid fa-circle-dot" style="color: var(--neon-blue); margin-right: 10px; font-size: 0.8rem;"></i>
+                <input type="text" id="route-start" placeholder="DÃ©part : Ma position (GPS)..." style="font-size: 0.9rem; color: #fff; background: transparent; border: none; width: 100%;">
             </div>
             <div style="display: flex; width: 100%; align-items: center;">
-                <button onclick="toggleManualStart()" title="DÃ©part manuel/GPS" style="color: var(--neon-blue);"><i class="fa-solid fa-map-pin"></i></button>
-                <input type="text" id="route-search" placeholder="Destination...">
-                <button onclick="searchDestination()"><i class="fa-solid fa-location-arrow"></i></button>
-                <button id="btn-rodage-toggle" onclick="toggleRodageHUD()" title="Mode Rodage"><i class="fa-solid fa-gauge-simple"></i></button>
-                <button id="btn-cancel-route" class="hidden" onclick="cancelRoute()"><i class="fa-solid fa-xmark"></i></button>
+                <i class="fa-solid fa-location-dot" style="color: #ffb703; margin-right: 10px; font-size: 1rem;"></i>
+                <input type="text" id="route-search" placeholder="ArrivÃ©e : Destination..." style="font-size: 0.9rem; color: #fff; background: transparent; border: none; width: 100%;">
+                <button onclick="searchDestination()" style="background: var(--neon-blue); color: black; border-radius: 50%; width: 35px; height: 35px; min-width: 35px; display: flex; align-items: center; justify-content: center; margin-left: 10px;"><i class="fa-solid fa-chevron-right"></i></button>
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 10px; justify-content: space-around; border-top: 1px solid rgba(255,255,255,0.05); pt: 5px;">
+                <button id="btn-rodage-toggle" onclick="toggleRodageHUD()" style="font-size: 0.7rem; color: #888;"><i class="fa-solid fa-gauge-simple"></i> RODAGE</button>
+                <button id="btn-cancel-route" class="hidden" onclick="cancelRoute()" style="font-size: 0.7rem; color: #ff4d4d;"><i class="fa-solid fa-xmark"></i> ANNULER</button>
             </div>
         </div>
     </div>
