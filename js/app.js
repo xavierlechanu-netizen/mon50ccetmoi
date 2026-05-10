@@ -98,6 +98,8 @@ let trafficLayer;
 let userMarker = null;
 let accuracyCircle = null;
 let currentPosition = null; 
+window.routeFerries = [];
+let lastSpokenFerryIndex = -1;
 let hazardMarkers = [];
 let officialPoiMarkers = [];
 let wakeLock = null;
@@ -693,6 +695,7 @@ function updatePosition(position) {
 
     // --- NEW: Hazard Proximity Verification ---
     checkHazardProximity(lat, lng);
+    checkFerryProximity(lat, lng);
 
     // --- CLOUD SYNC: Publish Position (Throttle to 15s) ---
     if (!window.lastCloudSync || Date.now() - window.lastCloudSync > 15000) {
@@ -788,7 +791,9 @@ window.OracleEngine = {
                 'level_up': "Félicitations Pilote. Votre expérience a augmenté.",
                 'start_guardian': "Ange Gardien activé. Surveillance périmétrique en cours.",
                 'stop_guardian': "Ange Gardien désactivé. Fin de la surveillance.",
-                'danger_overtake': "ATTENTION : DÉPASSEMENT DANGEREUX DÉTECTÉ."
+                'danger_overtake': "ATTENTION : DÉPASSEMENT DANGEREUX DÉTECTÉ.",
+                'ferry_detected': "Attention, cet itinéraire inclut une traversée en ferry.",
+                'ferry_ahead': "Traversée en ferry à 1 kilomètre. Préparez-vous à l'embarquement."
             },
             'liege': {
                 'start': "Oufti, l'Oracle est en place, valet ! On décolle ?",
@@ -895,7 +900,9 @@ window.OracleEngine = {
                 'level_up': "Congratulations Pilot. Your experience has increased.",
                 'start_guardian': "Guardian Angel activated. Monitoring perimeter.",
                 'stop_guardian': "Guardian Angel deactivated. End of monitoring.",
-                'danger_overtake': "WARNING: DANGEROUS OVERTAKE DETECTED."
+                'danger_overtake': "WARNING: DANGEROUS OVERTAKE DETECTED.",
+                'ferry_detected': "Attention, this route includes a ferry crossing.",
+                'ferry_ahead': "Ferry crossing in 1 kilometer. Prepare for boarding."
             }
         },
         'it': {
@@ -1200,6 +1207,23 @@ function calculateRouteSansAutoroute(start, end) {
             if (etaEl) {
                 const arrivalTime = new Date(Date.now() + leg.duration.value * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
                 etaEl.textContent = arrivalTime;
+            }
+
+            // Détection de ferry
+            window.routeFerries = leg.steps.filter(s => 
+                s.instructions.toLowerCase().includes('ferry') || 
+                (s.maneuver && s.maneuver.toLowerCase().includes('ferry'))
+            );
+            lastSpokenFerryIndex = -1; // Reset pour le nouvel itinéraire
+
+            if (window.routeFerries.length > 0) {
+                setTimeout(() => speak('ferry_detected'), 4000); // On attend un peu après l'annonce de calcul
+                if (window.NeuralHUD && typeof window.NeuralHUD.logToConsole === "function") {
+                    window.NeuralHUD.logToConsole(`NAV_INTEL: FERRY_CROSSING_AHEAD (${window.routeFerries.length})`);
+                }
+                if (window.Telemetry) {
+                    window.Telemetry.addLog("INFO", `Ferry crossing detected (${window.routeFerries.length})`);
+                }
             }
             
             if (window.isRodageActive) {
@@ -2738,6 +2762,31 @@ window.dismissGuardian = function() {
     const el = document.getElementById('guardian-prompt');
     if(el) el.remove();
 };
+
+function checkFerryProximity(lat, lng) {
+    if (!window.routeFerries || window.routeFerries.length === 0) return;
+
+    const p1 = new google.maps.LatLng(lat, lng);
+    
+    window.routeFerries.forEach((ferryStep, index) => {
+        const p2 = ferryStep.start_location;
+        const dist = google.maps.geometry.spherical.computeDistanceBetween(p1, p2);
+
+        // Alerte à 1km (1000 mètres)
+        if (dist < 1000 && lastSpokenFerryIndex !== index) {
+            speak('ferry_ahead');
+            lastSpokenFerryIndex = index;
+            console.log(`[NAV] Ferry crossing detected at ${dist.toFixed(0)}m. Announcement triggered.`);
+            
+            if (window.NeuralHUD && typeof window.NeuralHUD.logToConsole === "function") {
+                window.NeuralHUD.logToConsole(`ALERT: FERRY_CROSSING_IN_1KM`);
+            }
+            if (window.Telemetry) {
+                window.Telemetry.addLog("INFO", "Ferry crossing ahead: 1km");
+            }
+        }
+    });
+}
 
 window.addCategorizedMaint = function(category) {
     if (window.session && window.session.isGuest) {
