@@ -183,7 +183,11 @@ window.initMapController = function() {
         });
 
         directionsService = new google.maps.DirectionsService();
-        directionsRenderer = new google.maps.DirectionsRenderer({ map: map, suppressMarkers: true });
+        directionsRenderer = new google.maps.DirectionsRenderer({ 
+            map: map, 
+            suppressMarkers: true,
+            preserveViewport: false
+        });
         geocoder = new google.maps.Geocoder();
         trafficLayer = new google.maps.TrafficLayer();
         trafficLayer.setMap(map);

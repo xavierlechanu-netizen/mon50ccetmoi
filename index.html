@@ -333,20 +333,20 @@
         <div id="perf-timer">0-50: --s</div>
     </div>
 
-    <div id="search-container" style="top: 10px; left: 10px; right: 10px; max-width: 500px; margin: 0 auto;">
-        <div class="search-bar glassmorphism" style="flex-direction: column; align-items: stretch; padding: 8px 12px; border-radius: 15px;">
-            <div id="manual-start-box" style="width: 100%; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 5px; padding-bottom: 3px; display: flex; align-items: center;">
-                <i class="fa-solid fa-circle-dot" style="color: var(--neon-blue); margin-right: 8px; font-size: 0.7rem;"></i>
-                <input type="text" id="route-start" placeholder="DÃ©part (GPS par dÃ©faut)..." style="font-size: 0.8rem; color: #fff; background: transparent; border: none; width: 100%; outline: none;">
+    <div id="search-container" style="top: 100px; left: 10px; right: 10px; max-width: 500px; margin: 0 auto;">
+        <div class="search-bar glassmorphism" style="flex-direction: column; align-items: stretch; padding: 10px 15px; border-radius: 20px; border: 1px solid rgba(0, 210, 255, 0.3);">
+            <div id="manual-start-box" style="width: 100%; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 8px; padding-bottom: 5px; display: flex; align-items: center;">
+                <i class="fa-solid fa-circle-dot" style="color: var(--neon-blue); margin-right: 10px; font-size: 0.8rem;"></i>
+                <input type="text" id="route-start" placeholder="D&eacute;part (Ma position GPS)..." style="font-size: 0.9rem; color: #fff; background: transparent; border: none; width: 100%; outline: none;">
             </div>
             <div style="display: flex; width: 100%; align-items: center;">
-                <i class="fa-solid fa-location-dot" style="color: #ffb703; margin-right: 8px; font-size: 0.85rem;"></i>
-                <input type="text" id="route-search" placeholder="ArrivÃ©e : Destination..." style="font-size: 0.85rem; color: #fff; background: transparent; border: none; width: 100%; outline: none;">
-                <button onclick="searchDestination()" style="background: var(--neon-blue); color: black; border-radius: 50%; width: 30px; height: 30px; min-width: 30px; display: flex; align-items: center; justify-content: center; margin-left: 5px;"><i class="fa-solid fa-chevron-right" style="font-size: 0.8rem;"></i></button>
+                <i class="fa-solid fa-location-dot" style="color: #ffb703; margin-right: 12px; font-size: 1rem;"></i>
+                <input type="text" id="route-search" placeholder="Arriv&eacute;e : Destination..." style="font-size: 0.9rem; color: #fff; background: transparent; border: none; width: 100%; outline: none;">
+                <button onclick="searchDestination()" style="background: var(--neon-blue); color: black; border-radius: 50%; width: 35px; height: 35px; min-width: 35px; display: flex; align-items: center; justify-content: center; margin-left: 10px; box-shadow: 0 0 10px var(--neon-blue);"><i class="fa-solid fa-chevron-right"></i></button>
             </div>
-            <div style="display: flex; gap: 15px; margin-top: 5px; justify-content: center; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 3px;">
-                <button id="btn-rodage-toggle" onclick="toggleRodageHUD()" style="font-size: 0.65rem; color: #aaa; background: none; border: none;"><i class="fa-solid fa-gauge-simple"></i> RODAGE</button>
-                <button id="btn-cancel-route" class="hidden" onclick="cancelRoute()" style="font-size: 0.65rem; color: #ff4d4d; background: none; border: none;"><i class="fa-solid fa-xmark"></i> ANNULER</button>
+            <div style="display: flex; gap: 20px; margin-top: 8px; justify-content: center; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 5px;">
+                <button id="btn-rodage-toggle" onclick="toggleRodageHUD()" style="font-size: 0.7rem; color: #888; background: none; border: none; letter-spacing: 1px;"><i class="fa-solid fa-gauge-simple"></i> RODAGE</button>
+                <button id="btn-cancel-route" class="hidden" onclick="cancelRoute()" style="font-size: 0.7rem; color: #ff4d4d; background: none; border: none;"><i class="fa-solid fa-xmark"></i> ANNULER</button>
             </div>
         </div>
     </div>
