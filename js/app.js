@@ -2400,8 +2400,12 @@ window.submitMood = function(emoji) {
     alert("Merci pour votre retour !");
     closeMood();
 }
-window.closeMood = function() { document.getElementById('mood-overlay').classList.add('hidden'); }
-setTimeout(() => document.getElementById('mood-overlay')?.classList.remove('hidden'), 30000); 
+window.closeMood = function() { 
+    const mood = document.getElementById('mood-overlay');
+    if (mood) mood.classList.add('hidden'); 
+}
+// Désactivation du popup automatique (bloquait les tests)
+// setTimeout(() => document.getElementById('mood-overlay')?.classList.remove('hidden'), 30000); 
 
 window.requestAccountDeletion = function() {
     const confirm1 = confirm("⚠️ ATTENTION : Voulez-vous vraiment supprimer définitivement votre compte et TOUTES vos données (garage, points, historique) ?");
