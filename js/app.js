@@ -1178,36 +1178,35 @@ function calculateRouteSansAutoroute(start, end) {
 
     directionsService.route(request, (result, status) => {
         if (status === 'OK') {
-            // Si mode rodage, on sélectionne l'itinéraire le plus long ou le plus complexe (moins de vitesse)
-            // Pour l'instant on garde le défaut mais on prévient l'utilisateur
             directionsRenderer.setDirections(result);
             
-            if (window.isRodageActive) {
-                speak("Itinéraire spécial Rodage calculé. Routes tranquilles privilégiées.");
-            }
-            
-            // --- NEW: Advanced HUD Integration ---
             const leg = result.routes[0].legs[0];
             const nextStep = leg.steps[0];
             
-            document.getElementById('nav-instruction').classList.remove('hidden');
-            document.getElementById('nav-info-bar').style.display = 'block'; // On affiche le bandeau
-            document.getElementById('btn-stop-nav').classList.remove('hidden');
-            document.getElementById('btn-reroute').classList.remove('hidden');
+            // Affichage du bandeau
+            const infoBar = document.getElementById('nav-info-bar');
+            if (infoBar) infoBar.style.display = 'block';
             
-            document.getElementById('next-step-name').innerHTML = nextStep.instructions;
-            document.getElementById('next-step-dist').textContent = nextStep.distance.text;
-            
-            document.getElementById('nav-eta').textContent = new Date(Date.now() + leg.duration.value * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-            document.getElementById('nav-dist').textContent = leg.distance.text;
-            document.getElementById('nav-time').textContent = leg.duration.text;
-            
-            // AUTO-ACTIVATE GUARDIAN ANGEL ON NAVIGATION START
-            if (!window.isGuardianActive && typeof toggleGuardianAngel === "function") {
-                toggleGuardianAngel();
-            }
+            const btnStop = document.getElementById('btn-stop-nav');
+            if (btnStop) btnStop.classList.remove('hidden');
 
-            speak(`Itinéraire calculé. Arrivée prévue à ${document.getElementById('nav-eta').textContent}. Protection Ange Gardien activée.`);
+            // Mise à jour des KM et du TEMPS
+            const distEl = document.getElementById('nav-dist');
+            const timeEl = document.getElementById('nav-time');
+            const etaEl = document.getElementById('nav-eta');
+
+            if (distEl) distEl.textContent = leg.distance.text;
+            if (timeEl) timeEl.textContent = leg.duration.text;
+            if (etaEl) {
+                const arrivalTime = new Date(Date.now() + leg.duration.value * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                etaEl.textContent = arrivalTime;
+            }
+            
+            if (window.isRodageActive) {
+                speak(`Itinéraire rodage calculé. ${leg.distance.text} à parcourir.`);
+            } else {
+                speak(`Itinéraire calculé. ${leg.distance.text}, arrivée prévue à ${etaEl ? etaEl.textContent : ''}.`);
+            }
 
             if(destinationMarker) destinationMarker.setMap(null);
             destinationMarker = new google.maps.Marker({
