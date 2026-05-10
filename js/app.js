@@ -423,13 +423,51 @@ function getSmoothedSpeed(rawSpeed) {
 }
 
 function updatePosition(position) {
-    if(!map) return; 
     const lat = position.coords.latitude;
     const lng = position.coords.longitude;
     const speed = position.coords.speed;
     const accuracy = position.coords.accuracy;
 
+    const oldPos = currentPosition;
     currentPosition = { lat, lng };
+
+    if(!map) return; 
+
+    // Premier FIX : on centre la carte
+    if (!oldPos && map) {
+        map.setCenter(currentPosition);
+        console.log("mon50cc GPS : Premier FIX reçu, centrage carte.");
+        
+        // Si une destination attendait le GPS, on la lance maintenant
+        if (window.pendingDestinationName) {
+            console.log("mon50cc GPS : Lancement de l'itinéraire en attente vers : " + window.pendingDestinationName);
+            const savedName = window.pendingDestinationName;
+            window.pendingDestinationName = null; 
+            document.getElementById('route-search').value = savedName;
+            window.searchDestination();
+        }
+    }
+
+    // Mise à jour du marqueur utilisateur (Point Bleu)
+    if (typeof userMarker === 'undefined') window.userMarker = null;
+    if (!window.userMarker && google.maps.Marker) {
+        window.userMarker = new google.maps.Marker({
+            position: currentPosition,
+            map: map,
+            icon: {
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 8,
+                fillColor: "#00d2ff",
+                fillOpacity: 1,
+                strokeColor: "white",
+                strokeWeight: 2
+            },
+            title: "Ma Position"
+        });
+    } else if (window.userMarker) {
+        window.userMarker.setPosition(currentPosition);
+    }
+
     if (window.OracleEngine) window.OracleEngine.updateRegion(lat, lng);
 
     // Update Telemetry HUD if active
@@ -1151,29 +1189,32 @@ window.cancelRoute = function() {
     document.getElementById('route-search').value = "";
 }
 
+window.pendingDestination = null;
+
 window.searchDestination = function() {
     const query = document.getElementById('route-search').value;
     if (!query) return;
+
     if (!geocoder || !map) {
         speak("Carte en cours de chargement, veuillez patienter.");
-        const btn = document.querySelector('#search-container button');
-        if (btn) { btn.style.animation = 'pulse-red 0.5s 2'; setTimeout(() => btn.style.animation = '', 1000); }
         return;
     }
+
     if (!currentPosition) {
-        speak("Position GPS en cours d'acquisition. Réessayez dans quelques secondes.");
+        speak("Recherche de votre position GPS. L'itinéraire démarrera automatiquement dès que possible.");
+        window.pendingDestinationName = query; // On mémorise la destination
         return;
     }
+
     geocoder.geocode({ address: query }, (res, status) => {
         if (status === "OK") {
             const dest = res[0].geometry.location;
             calculateRouteSansAutoroute(currentPosition, dest);
             map.panTo(dest);
-            // Afficher le bouton d'annulation
             const btnCancel = document.getElementById('btn-cancel-route');
             if (btnCancel) btnCancel.classList.remove('hidden');
         } else {
-            speak("Destination introuvable : " + query);
+            speak("Destination introuvable.");
         }
     });
 }
