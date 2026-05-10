@@ -188,6 +188,27 @@ window.initMapController = function() {
         trafficLayer = new google.maps.TrafficLayer();
         trafficLayer.setMap(map);
 
+        // --- NEW: Autocomplete Search ---
+        const input = document.getElementById('route-search');
+        if (input && google.maps.places) {
+            const autocomplete = new google.maps.places.Autocomplete(input);
+            autocomplete.bindTo('bounds', map);
+            autocomplete.addListener('place_changed', () => {
+                const place = autocomplete.getPlace();
+                if (!place.geometry) {
+                    window.searchDestination(); // Fallback si pas de sélection précise
+                    return;
+                }
+                if (place.geometry.viewport) {
+                    map.fitBounds(place.geometry.viewport);
+                } else {
+                    map.setCenter(place.geometry.location);
+                    map.setZoom(17);
+                }
+                calculateRouteSansAutoroute(currentPosition, place.geometry.location);
+            });
+        }
+
         console.log("mon50cc Maps : Contrôleur prêt.");
         if (statusEl) statusEl.textContent = "Systèmes opérationnels.";
     } catch (e) {
