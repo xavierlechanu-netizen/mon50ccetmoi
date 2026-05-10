@@ -188,7 +188,12 @@ window.initMapController = function() {
         trafficLayer = new google.maps.TrafficLayer();
         trafficLayer.setMap(map);
 
-        // --- NEW: Autocomplete Search ---
+        // Autocomplete pour le Départ (Optionnel)
+        const startInput = document.getElementById('route-start');
+        if (startInput && google.maps.places) {
+            new google.maps.places.Autocomplete(startInput);
+        }
+
         const input = document.getElementById('route-search');
         if (input && google.maps.places) {
             const autocomplete = new google.maps.places.Autocomplete(input);
@@ -1235,8 +1240,18 @@ window.cancelRoute = function() {
 
 window.pendingDestination = null;
 
+window.toggleManualStart = function() {
+    const box = document.getElementById('manual-start-box');
+    box.classList.toggle('hidden');
+    if(!box.classList.contains('hidden')) {
+        document.getElementById('route-start').focus();
+    }
+}
+
 window.searchDestination = function() {
     const query = document.getElementById('route-search').value;
+    const startQuery = document.getElementById('route-start').value;
+    
     if (!query) return;
 
     if (!geocoder || !map) {
@@ -1244,9 +1259,25 @@ window.searchDestination = function() {
         return;
     }
 
+    // SI DEPART MANUEL
+    if (startQuery.trim() !== "") {
+        geocoder.geocode({ address: startQuery }, (resStart, statusStart) => {
+            if (statusStart === "OK") {
+                const startPos = resStart[0].geometry.location;
+                geocoder.geocode({ address: query }, (resEnd, statusEnd) => {
+                    if (statusEnd === "OK") {
+                        calculateRouteSansAutoroute(startPos, resEnd[0].geometry.location);
+                    } else { speak("Destination introuvable."); }
+                });
+            } else { speak("Lieu de départ introuvable."); }
+        });
+        return;
+    }
+
+    // SINON GPS CLASSIQUE
     if (!currentPosition) {
         speak("Recherche de votre position GPS. L'itinéraire démarrera automatiquement dès que possible.");
-        window.pendingDestinationName = query; // On mémorise la destination
+        window.pendingDestinationName = query; 
         return;
     }
 

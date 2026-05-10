@@ -333,15 +333,18 @@
         <div id="perf-timer">0-50: --s</div>
     </div>
 
-    <!-- Search Tool (Top) -->
     <div id="search-container">
         <div class="search-bar glassmorphism">
-            <input type="text" id="route-search" placeholder="Destination...">
-            <button onclick="searchDestination()"><i class="fa-solid fa-location-arrow"></i></button>
-            <button id="btn-rodage-toggle" onclick="toggleRodageHUD()" title="Mode Rodage"><i class="fa-solid fa-gauge-simple"></i></button>
-            <button onclick="toggleTilt()" title="Mode 3D/2D"><i class="fa-solid fa-cube"></i></button>
-            <button onclick="toggleTraffic()" title="Info Trafic"><i class="fa-solid fa-traffic-light"></i></button>
-            <button id="btn-cancel-route" class="hidden" onclick="cancelRoute()"><i class="fa-solid fa-xmark"></i></button>
+            <div id="manual-start-box" class="hidden" style="width: 100%; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 5px;">
+                <input type="text" id="route-start" placeholder="DÃ©part (Ma position)..." style="font-size: 0.8rem; color: var(--neon-blue);">
+            </div>
+            <div style="display: flex; width: 100%; align-items: center;">
+                <button onclick="toggleManualStart()" title="DÃ©part manuel/GPS" style="color: var(--neon-blue);"><i class="fa-solid fa-map-pin"></i></button>
+                <input type="text" id="route-search" placeholder="Destination...">
+                <button onclick="searchDestination()"><i class="fa-solid fa-location-arrow"></i></button>
+                <button id="btn-rodage-toggle" onclick="toggleRodageHUD()" title="Mode Rodage"><i class="fa-solid fa-gauge-simple"></i></button>
+                <button id="btn-cancel-route" class="hidden" onclick="cancelRoute()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
         </div>
     </div>
 
