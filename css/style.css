@@ -2161,7 +2161,7 @@ body, html {
 
 .hidden { display: none !important; }
 
-.search-bar {
+/* .search-bar {
     display: flex;
     align-items: center;
     width: 100%;
@@ -2196,7 +2196,7 @@ body, html {
 
 .search-bar button#btn-cancel-route {
     color: #ff4444;
-}
+} */
 
 /* Scrollbar Style for Sidebar */
 .sidebar-content::-webkit-scrollbar {
