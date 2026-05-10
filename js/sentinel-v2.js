@@ -54,12 +54,19 @@ window.Sentinel = {
 
     // 1. Surveillance et Interception des Bugs
     startGlobalMonitoring: function() {
+        const IGNORED_SOURCES = ['firebase', 'gstatic', 'googleapis', 'firebaseio', 'esm2017', 'eventtarget', 'webchannel', 'channelrequest', 'fetchxmlhttp', 'xhrio', 'run.js'];
+
         window.onerror = (msg, url, line) => {
+            // Ignorer les erreurs provenant des libs externes (Firebase, Maps)
+            if (url && IGNORED_SOURCES.some(src => url.includes(src))) return true;
             this.handleBug("Runtime Error", {msg, url, line});
             return true;
         };
 
         window.onunhandledrejection = (event) => {
+            // Ignorer les rejets de promesses Firebase internes
+            const reason = String(event.reason || '');
+            if (IGNORED_SOURCES.some(src => reason.includes(src))) return;
             this.handleBug("Promise Rejection", event.reason);
         };
     },
