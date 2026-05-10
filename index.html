@@ -236,10 +236,6 @@
         </div>
     </div>
 
-    <!-- Safety Notification Banner -->
-    <div id="safety-banner" class="hidden glassmorphism">
-        <i class="fa-solid fa-ghost"></i> GHOST RIDER : Analyse de la route...
-    </div>
 
     <!-- Tactical HUD Overlay -->
     <div id="hud" class="tactical-layout">
@@ -251,9 +247,9 @@
                 <span class="tactical-speed-unit">km/h</span>
             </div>
 
-            <!-- SEARCH (Integrated) -->
-            <div id="search-container" style="flex: 1; max-width: 400px; margin-top: 5px;">
-                <div class="search-bar glassmorphism" style="flex-direction: column; align-items: stretch; padding: 6px 12px; border-radius: 15px; border: 1px solid rgba(0, 210, 255, 0.2);">
+            <!-- SEARCH (Integrated & Opaque) -->
+            <div id="search-container" style="flex: 1; max-width: 400px; margin-top: 5px; z-index: 10000;">
+                <div class="search-bar" style="display: flex; flex-direction: column; align-items: stretch; padding: 6px 12px; border-radius: 15px; border: 1px solid rgba(0, 210, 255, 0.4); background: #111; box-shadow: 0 4px 15px rgba(0,0,0,0.8);">
                     <div id="manual-start-box" style="width: 100%; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 4px; padding-bottom: 2px; display: flex; align-items: center;">
                         <i class="fa-solid fa-circle-dot" style="color: var(--neon-blue); margin-right: 8px; font-size: 0.6rem;"></i>
                         <input type="text" id="route-start" placeholder="D&eacute;part (GPS)..." style="font-size: 0.75rem; color: #fff; background: transparent; border: none; width: 100%; outline: none;">
