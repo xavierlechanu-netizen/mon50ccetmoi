@@ -241,10 +241,9 @@ window.startApp = function() {
         const loader = document.getElementById('app-loader');
         if (loader) {
             loader.style.opacity = '0';
-            setTimeout(() => {
-                loader.style.visibility = 'hidden';
-                speak("Systèmes opérationnels. Bonne route sur mon 50cc et moi.");
-            }, 800);
+        // Le message vocal est maintenant déclenché après le consentement ou l'interaction pour garantir le son
+        updateUILabels();
+        if (typeof renderCommunityMarkers === "function") renderCommunityMarkers();
         }
         updateUILabels();
         if (typeof renderCommunityMarkers === "function") renderCommunityMarkers();
@@ -336,6 +335,12 @@ async function checkLegalConsent() {
     document.getElementById('btn-accept-legal').onclick = () => {
         localStorage.setItem('legal_consent_accepted', 'true');
         modal.remove();
+        
+        // Déclenchement du message de bienvenue (Audio débloqué par le clic)
+        const name = (window.session && !window.session.isGuest) ? window.session.username : "";
+        const welcomeMsg = name ? `Content de vous revoir, ${name}. Systèmes opérationnels.` : "Systèmes opérationnels. Bonne route sur mon 50cc et moi.";
+        speak(welcomeMsg);
+        
         startGeolocation();
     };
 }
