@@ -264,8 +264,8 @@
 
         <div style="flex:1;"></div>
 
-        <!-- BOTTOM STATS PANEL -->
-        <div class="tactical-bottom-panel tactical-panel">
+        <!-- BOTTOM STATS PANEL (Hidden until navigation starts) -->
+        <div id="nav-info-bar" class="tactical-bottom-panel tactical-panel hidden">
             <div class="tactical-route-header">
                 <div class="route-title">ROUTE 1</div>
             </div>
@@ -350,6 +350,29 @@
             </div>
         </div>
     </div>
+    
+    <style>
+        /* Style Dark pour l'autocompletion Google Places */
+        .pac-container {
+            background-color: #0a0a0a !important;
+            border: 1px solid #00d2ff !important;
+            border-radius: 10px !important;
+            margin-top: 5px !important;
+            box-shadow: 0 0 20px rgba(0, 210, 255, 0.2) !important;
+            font-family: 'Outfit', sans-serif !important;
+        }
+        .pac-item {
+            color: #fff !important;
+            border-top: 1px solid rgba(255,255,255,0.1) !important;
+            padding: 10px !important;
+        }
+        .pac-item:hover {
+            background-color: rgba(0, 210, 255, 0.1) !important;
+        }
+        .pac-item-query {
+            color: #00d2ff !important;
+        }
+    </style>
 
     <!-- Tactical Action Options (Hidden by default, triggered by control-row) -->
     <div id="hazard-options" class="hidden">
