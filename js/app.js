@@ -205,6 +205,14 @@ window.initMapController = function() {
                     map.setCenter(place.geometry.location);
                     map.setZoom(17);
                 }
+
+                // Vérification cruciale de currentPosition avant calcul
+                if (!currentPosition) {
+                    speak("Recherche de votre position GPS. L'itinéraire démarrera automatiquement dès que possible.");
+                    window.pendingDestinationName = input.value;
+                    return;
+                }
+
                 calculateRouteSansAutoroute(currentPosition, place.geometry.location);
             });
         }
