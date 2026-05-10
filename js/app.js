@@ -384,9 +384,14 @@ function startGeolocation() {
         if (err.code === 2) msg = "Position GPS indisponible (signal faible).";
         if (err.code === 3) msg = "Timeout GPS : aucune position reçue.";
         console.error("mon50cc GPS : " + msg, err);
+        
+        // Alerte vocale en cas de problème prolongé
+        if (err.code === 1) speak("Attention, le signal GPS est bloqué. Veuillez autoriser la localisation.");
+        else if (err.code === 2 || err.code === 3) speak("Signal GPS faible. Recherche en cours...");
+
         // Retry with low accuracy after failure
         setTimeout(() => {
-            navigator.geolocation.watchPosition(updatePosition, (e) => console.warn("GPS low-acc fallback:", e), { enableHighAccuracy: false, timeout: 30000 });
+            navigator.geolocation.watchPosition(updatePosition, (e) => console.warn("GPS low-acc fallback:", e), { enableHighAccuracy: false, timeout: 30000, maximumAge: 10000 });
         }, 3000);
     };
 
@@ -1194,7 +1199,12 @@ function calculateRouteSansAutoroute(start, end) {
                     strokeWeight: 2
                 }
             });
-        } else { alert("Routage impossible: " + status); }
+            } else if (status === 'ZERO_RESULTS') {
+                speak("Aucun itinéraire trouvé vers cette destination.");
+            } else { 
+                console.error("Routage impossible: " + status);
+                speak("Erreur de calcul d'itinéraire.");
+            }
     });
 }
 
