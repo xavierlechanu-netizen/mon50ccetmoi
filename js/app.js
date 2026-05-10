@@ -1191,7 +1191,7 @@ function calculateRouteSansAutoroute(start, end) {
             const nextStep = leg.steps[0];
             
             document.getElementById('nav-instruction').classList.remove('hidden');
-            document.getElementById('nav-info-bar').classList.remove('hidden');
+            document.getElementById('nav-info-bar').style.display = 'block'; // On affiche le bandeau
             document.getElementById('btn-stop-nav').classList.remove('hidden');
             document.getElementById('btn-reroute').classList.remove('hidden');
             
@@ -1235,7 +1235,7 @@ window.cancelRoute = function() {
     if(destinationMarker) { destinationMarker.setMap(null); destinationMarker = null; }
     
     document.getElementById('nav-instruction').classList.add('hidden');
-    document.getElementById('nav-info-bar').classList.add('hidden');
+    document.getElementById('nav-info-bar').style.display = 'none'; // On cache le bandeau
     document.getElementById('btn-stop-nav').classList.add('hidden');
     document.getElementById('btn-reroute').classList.add('hidden');
     
