@@ -12,13 +12,13 @@ window.EnginePulse = {
             this.oscillator = this.audioCtx.createOscillator();
             this.gainNode = this.audioCtx.createGain();
 
-            this.oscillator.type = 'sawtooth';
-            this.oscillator.frequency.setValueAtTime(40, this.audioCtx.currentTime); // Base low hum
+            this.oscillator.type = 'sine'; // Plus doux que 'sawtooth'
+            this.oscillator.frequency.setValueAtTime(50, this.audioCtx.currentTime); // Hum tech
             
-            // Low pass filter for "muffled" engine sound
+            // Low pass filter pour un son encore plus propre
             const filter = this.audioCtx.createBiquadFilter();
             filter.type = 'lowpass';
-            filter.frequency.setValueAtTime(400, this.audioCtx.currentTime);
+            filter.frequency.setValueAtTime(200, this.audioCtx.currentTime);
 
             this.oscillator.connect(filter);
             filter.connect(this.gainNode);
@@ -39,11 +39,11 @@ window.EnginePulse = {
             this.audioCtx.resume();
         }
 
-        const targetFreq = 40 + (speed * 2);
-        const targetGain = Math.min(0.1 + (speed / 100), 0.4);
+        const targetFreq = 50 + (speed * 1.5);
+        const targetGain = Math.min(0.02 + (speed / 200), 0.15); // Volume beaucoup plus bas
         
         this.oscillator.frequency.setTargetAtTime(targetFreq, this.audioCtx.currentTime, 0.1);
-        this.gainNode.gain.setTargetAtTime(window.isRiding ? targetGain : 0.05, this.audioCtx.currentTime, 0.2);
+        this.gainNode.gain.setTargetAtTime(window.isRiding ? targetGain : 0.02, this.audioCtx.currentTime, 0.2);
     },
 
     stopSynth: function() {
