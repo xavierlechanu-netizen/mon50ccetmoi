@@ -40,6 +40,9 @@ self.addEventListener('message', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  // Ignorer les schémas non supportés (chrome-extension, data, etc.)
+  if (!event.request.url.startsWith('http')) return;
+
   const url = new URL(event.request.url);
 
   // Toujours aller chercher sur le réseau pour les APIs externes
