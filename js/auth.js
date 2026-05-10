@@ -77,12 +77,11 @@ window.escapeHTML = function(str) {
 window.login = async function(username, password) {
     if (!username || !password) return alert("Identifiants manquants.");
 
-    // --- PRODUCTION REVIEW BYPASS (ENV CONTROLLED) ---
-    // Note: Use environment-specific flags or a secure backend check for Play Store review.
-    const isReviewMode = localStorage.getItem('PROD_REVIEW_BYPASS') === 'true'; 
-    if (isReviewMode && username === "Reviewer" && password === "Secured-2026!") {
-        // ... Review logic
-        return;
+    // --- PRODUCTION REVIEW BYPASS (CONFIG CONTROLLED) ---
+    const isReviewMode = localStorage.getItem('PROD_REVIEW_BYPASS') === 'true' || (typeof CONFIG !== 'undefined' && CONFIG.ENV === 'review'); 
+    if (isReviewMode && username === (typeof CONFIG !== 'undefined' ? CONFIG.REVIEW_USER : "Reviewer")) {
+        console.log("mon50cc Security : Review Bypass Mode Triggered.");
+        // Process review login via Firebase or internal bypass if configured in CONFIG
     }
 
 

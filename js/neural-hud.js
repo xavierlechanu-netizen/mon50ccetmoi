@@ -120,12 +120,15 @@ window.NeuralHUD = {
 
     logToConsole: function(msg) {
         const consoleLogs = document.getElementById('console-logs');
-        if (!consoleLogs) return;
-        const log = document.createElement('div');
-        log.className = 'log';
-        log.textContent = `> ${msg}`;
-        consoleLogs.prepend(log);
-        if (consoleLogs.children.length > 5) consoleLogs.lastElementChild.remove();
+        if (consoleLogs) {
+            const log = document.createElement('div');
+            log.className = 'log';
+            log.textContent = `> ${msg}`;
+            consoleLogs.prepend(log);
+            if (consoleLogs.children.length > 5) consoleLogs.lastElementChild.remove();
+        }
+        // Feed into hijacked console for Telemetry capture
+        console.log(`[NEURAL] ${msg}`);
     },
 
     updateBiometrics: function(speed, stress) {

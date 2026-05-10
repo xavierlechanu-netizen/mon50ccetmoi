@@ -19,8 +19,8 @@
     "path": "./upload-keystore.jks",
     "alias": "upload"
   },
-  "appVersionName": "20.6",
-  "appVersionCode": 18,
+  "appVersionName": "50.0.19",
+  "appVersionCode": 50020,
   "shortcuts": [],
   "generatorApp": "bubblewrap-cli",
   "webManifestUrl": "https://xavierlechanu-netizen.github.io/com.mon50ccetmoi.tws/manifest.json",
@@ -40,5 +40,5 @@
   ],
   "retainedBundles": [],
   "displayOverride": [],
-  "appVersion": "20.6"
+  "appVersion": "50.0.19"
 }

@@ -14,6 +14,7 @@ window.Telemetry = {
         this.hijackConsole();
         // this.trackGps(); // Désactivé temporairement pour éviter les conflits GPS avec app.js
         this.trackPerformance();
+        this.trackBattery();
         
         // Auto-refresh UI
         setInterval(() => this.updateHUD(), 1000);
@@ -32,6 +33,11 @@ window.Telemetry = {
                 <div>UPTIME: <span id="tel-uptime">0s</span></div>
                 <div>GPS: <span id="tel-gps">WAITING</span></div>
                 <div>MEM: <span id="tel-mem">--</span></div>
+                <div>BAT: <span id="tel-bat">--</span></div>
+            </div>
+            <div class="telemetry-actions">
+                <button onclick="window.Telemetry.ping()">[ PING_SERVER ]</button>
+                <button onclick="window.Telemetry.clearLogs()">[ CLEAR_LOGS ]</button>
             </div>
             <div id="telemetry-logs" class="telemetry-logs"></div>
         `;
@@ -111,6 +117,38 @@ window.Telemetry = {
             this.isVisible = !this.isVisible;
             hud.style.display = this.isVisible ? 'flex' : 'none';
         }
+    },
+
+    trackBattery: function() {
+        if ('getBattery' in navigator) {
+            navigator.getBattery().then(battery => {
+                const update = () => {
+                    const batEl = document.getElementById('tel-bat');
+                    if (batEl) batEl.textContent = `${Math.round(battery.level * 100)}% ${battery.charging ? '⚡' : ''}`;
+                };
+                battery.addEventListener('levelchange', update);
+                battery.addEventListener('chargingchange', update);
+                update();
+            });
+        }
+    },
+
+    ping: function() {
+        const start = Date.now();
+        this.addLog("INFO", "Ping sequence initiated...");
+        fetch('https://api.ipify.org?format=json')
+            .then(() => {
+                const latency = Date.now() - start;
+                this.addLog("SUCCESS", `Server responsive (Latency: ${latency}ms)`);
+            })
+            .catch(err => this.addLog("ERROR", "Ping failed: " + err.message));
+    },
+
+    clearLogs: function() {
+        this.logs = [];
+        const logEl = document.getElementById('telemetry-logs');
+        if (logEl) logEl.innerHTML = '';
+        this.addLog("INFO", "Diagnostic logs cleared.");
     }
 };
 

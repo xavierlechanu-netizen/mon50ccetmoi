@@ -19,8 +19,8 @@
     "path": "./upload-keystore.jks",
     "alias": "upload"
   },
-  "appVersionName": "50.0.17",
-  "appVersionCode": 50018,
+  "appVersionName": "50.0.20",
+  "appVersionCode": 50021,
   "shortcuts": [],
   "generatorApp": "bubblewrap-cli",
   "webManifestUrl": "https://xavierlechanu-netizen.github.io/com.mon50ccetmoi.tws/manifest.json",
@@ -35,10 +35,11 @@
   "minSdkVersion": 21,
   "orientation": "portrait",
   "fingerprints": [],
+  "serviceAccountJsonFile": "mon50ccetmoi-firebase-adminsdk-fbsvc-248403805b.json",
   "additionalTrustedOrigins": [
     "https://xavierlechanu-netizen.github.io"
   ],
   "retainedBundles": [],
   "displayOverride": [],
-  "appVersion": "50.0.17"
+  "appVersion": "50.0.19"
 }
