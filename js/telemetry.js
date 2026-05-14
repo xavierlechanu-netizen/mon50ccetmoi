@@ -90,7 +90,7 @@ window.Telemetry = {
                     if (gpsStatus) gpsStatus.textContent = "ERROR: " + err.code;
                     this.addLog("ERROR", "GPS Failure: " + err.message);
                 },
-                { enableHighAccuracy: true, timeout: 30000, maximumAge: 10000 }
+                { enableHighAccuracy: true, timeout: 30000, maximumAge: Infinity }
             );
         }
     },

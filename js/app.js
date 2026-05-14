@@ -403,7 +403,7 @@ function startGeolocation() {
     const geoOptions = {
         enableHighAccuracy: true,
         timeout: 30000,
-        maximumAge: 10000
+        maximumAge: Infinity
     };
 
     const onError = (err) => {
