@@ -292,6 +292,26 @@
             </div>
         </div>
 
+        <!-- SECONDARY NAV BAR (Vault Tabs) -->
+        <div id="vault-tabs" class="tactical-secondary-nav" style="display: flex; justify-content: space-around; align-items: center; background: rgba(5, 10, 15, 0.85); backdrop-filter: blur(15px); border-radius: 20px 20px 0 0; padding: 10px 15px; border: 1px solid rgba(255,255,255,0.05); border-bottom: none; margin-bottom: -10px; width: 95%; align-self: center; z-index: 9999;">
+            <div class="t-nav-btn active" onclick="showVaultTab('docs')" style="color: #ffd700;">
+                <i class="fa-solid fa-file-lines"></i>
+                <span style="font-size: 0.6rem;">DOCUMENTS</span>
+            </div>
+            <div class="t-nav-btn" onclick="showVaultTab('activities')">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+                <span style="font-size: 0.6rem;">ACTIVITIES</span>
+            </div>
+            <div class="t-nav-btn" onclick="showVaultTab('badges')">
+                <i class="fa-solid fa-award"></i>
+                <span style="font-size: 0.6rem;">BADGES</span>
+            </div>
+            <div class="t-nav-btn" onclick="showVaultTab('profile')">
+                <i class="fa-regular fa-user"></i>
+                <span style="font-size: 0.6rem;">PROFILE</span>
+            </div>
+        </div>
+
         <!-- BOTTOM NAV BAR -->
         <div class="tactical-nav-bar">
             <button class="t-nav-btn active" onclick="document.getElementById('secure-vault-screen').classList.add('hidden')">
