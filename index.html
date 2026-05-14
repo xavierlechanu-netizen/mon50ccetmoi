@@ -293,7 +293,7 @@
         </div>
 
         <!-- SECONDARY NAV BAR (Vault Tabs) -->
-        <div id="vault-tabs" class="tactical-secondary-nav" style="display: flex; justify-content: space-around; align-items: center; background: rgba(5, 10, 15, 0.85); backdrop-filter: blur(15px); border-radius: 20px 20px 0 0; padding: 10px 15px; border: 1px solid rgba(255,255,255,0.05); border-bottom: none; margin-bottom: -10px; width: 95%; align-self: center; z-index: 9999;">
+        <div id="vault-tabs" class="tactical-secondary-nav hidden" style="display: flex; justify-content: space-around; align-items: center; background: rgba(5, 10, 15, 0.85); backdrop-filter: blur(15px); border-radius: 20px 20px 0 0; padding: 10px 15px; border: 1px solid rgba(255,255,255,0.05); border-bottom: none; margin-bottom: -10px; width: 95%; align-self: center; z-index: 9999;">
             <div class="t-nav-btn active" onclick="showVaultTab('docs')" style="color: #ffd700;">
                 <i class="fa-solid fa-file-lines"></i>
                 <span style="font-size: 0.6rem;">DOCUMENTS</span>
@@ -314,11 +314,11 @@
 
         <!-- BOTTOM NAV BAR -->
         <div class="tactical-nav-bar">
-            <button class="t-nav-btn active" onclick="document.getElementById('secure-vault-screen').classList.add('hidden')">
+            <button class="t-nav-btn active" onclick="document.getElementById('secure-vault-screen').classList.add('hidden'); document.getElementById('search-container').classList.remove('hidden'); document.getElementById('vault-tabs').classList.add('hidden');">
                 <i class="fa-regular fa-paper-plane"></i>
                 <span>NAV</span>
             </button>
-            <button class="t-nav-btn" onclick="document.getElementById('secure-vault-screen').classList.remove('hidden')">
+            <button class="t-nav-btn" onclick="document.getElementById('secure-vault-screen').classList.remove('hidden'); document.getElementById('search-container').classList.add('hidden'); document.getElementById('vault-tabs').classList.remove('hidden');">
                 <i class="fa-solid fa-car-side"></i>
                 <span>VEHICLE</span>
             </button>
@@ -326,7 +326,7 @@
                 <i class="fa-solid fa-music"></i>
                 <span>AUDIO</span>
             </button>
-            <button class="t-nav-btn" onclick="document.getElementById('secure-vault-screen').classList.remove('hidden')">
+            <button class="t-nav-btn" onclick="document.getElementById('secure-vault-screen').classList.remove('hidden'); document.getElementById('search-container').classList.add('hidden'); document.getElementById('vault-tabs').classList.remove('hidden');">
                 <i class="fa-solid fa-gear"></i>
                 <span>SETTINGS</span>
             </button>
