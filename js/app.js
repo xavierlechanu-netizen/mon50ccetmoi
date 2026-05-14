@@ -275,6 +275,33 @@ window.startApp = function() {
     renderRoadbooks();
     if (window.OracleVoice) window.OracleVoice.start();
     
+    // ── Initialisation des Cartes Hors Ligne ──────────────────────
+    if (window.OfflineMapManager) {
+        try {
+            window.OfflineMapManager.init();
+            console.log("mon50cc OfflineMap : Module initialisé.");
+
+            // Mise à jour du badge de statut dans le sidebar
+            const updateOfflineBadge = () => {
+                const dot = document.getElementById('offline-status-dot');
+                if (!dot) return;
+                if (navigator.onLine) {
+                    dot.textContent = 'EN LIGNE';
+                    dot.style.background = '#2ecc71';
+                } else {
+                    dot.textContent = 'HORS LIGNE';
+                    dot.style.background = '#ff0055';
+                }
+            };
+            updateOfflineBadge();
+            window.addEventListener('online', updateOfflineBadge);
+            window.addEventListener('offline', updateOfflineBadge);
+        } catch(e) {
+            console.warn("mon50cc OfflineMap : Erreur init", e);
+        }
+    }
+    // ─────────────────────────────────────────────────────────────
+
     // Check Parameters
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.has('shortcut')) {
@@ -303,6 +330,55 @@ window.startApp = function() {
     // Lancement de la géolocalisation
     checkLegalConsent();
 };
+
+// ── Panneau Cartes Hors Ligne : ouverture / fermeture ────────────
+window.toggleOfflinePanel = function() {
+    const panel = document.getElementById('offline-panel');
+    if (!panel) return;
+
+    closeMenu(); // Ferme le sidebar
+
+    if (panel.classList.contains('hidden')) {
+        panel.classList.remove('hidden');
+
+        // Statut réseau live
+        const statusEl = document.getElementById('offline-network-status');
+        if (statusEl) {
+            const online = navigator.onLine;
+            statusEl.style.cssText += `
+                background: ${online ? 'rgba(0,46,20,0.8)' : 'rgba(46,0,20,0.8)'};
+                border: 1px solid ${online ? 'rgba(0,255,136,0.3)' : 'rgba(255,0,85,0.3)'};
+                color: ${online ? '#00ff88' : '#ff4d6d'};
+            `;
+            statusEl.innerHTML = `
+                <span style="font-size:1rem; margin-right:8px;">${online ? '🟢' : '🔴'}</span>
+                ${online ? 'CONNECTÉ — Google Maps actif' : 'HORS LIGNE — Carte locale active'}
+            `;
+        }
+
+        // Stats du cache
+        if (window.OfflineMapManager) {
+            window.OfflineMapManager.getStats((stats) => {
+                const el = document.getElementById('offline-tiles-stat');
+                if (el) {
+                    el.textContent = stats.count > 0
+                        ? `${stats.count} tuiles en cache (~${stats.estimatedMb} Mo)`
+                        : 'Aucune tuile en cache';
+                }
+            });
+            window.OfflineMapManager.refreshZoneList();
+        }
+    } else {
+        panel.classList.add('hidden');
+    }
+};
+
+window.closeOfflinePanel = function(evt) {
+    if (evt && evt.target !== document.getElementById('offline-panel')) return;
+    const panel = document.getElementById('offline-panel');
+    if (panel) panel.classList.add('hidden');
+};
+
 
 // Fonctions de menu déplacées au début pour sécurité
 
@@ -706,12 +782,18 @@ function updatePosition(position) {
     checkHazardProximity(lat, lng);
     checkFerryProximity(lat, lng);
 
+    // --- OFFLINE MAP: Sync Leaflet marker position ---
+    if (window.OfflineMapManager) {
+        window.OfflineMapManager.updatePosition(lat, lng);
+    }
+
     // --- CLOUD SYNC: Publish Position (Throttle to 15s) ---
     if (!window.lastCloudSync || Date.now() - window.lastCloudSync > 15000) {
         if (typeof publishUserLocation === "function") {
             publishUserLocation(lat, lng, window.isRiding ? "Sur la route" : "En pause");
             window.lastCloudSync = Date.now();
         }
+
     }
 }
 

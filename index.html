@@ -17,7 +17,7 @@
     </script>
     <meta charset="UTF-8">
     <!-- SÃ©curitÃ© Maximale : Content Security Policy (OptimisÃ©e pour Google Maps & Firebase) -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://maps.googleapis.com https://www.gstatic.com https://cdn.jsdelivr.net https://fonts.googleapis.com https://accounts.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; img-src 'self' data: https://maps.gstatic.com https://maps.googleapis.com https://*.googleapis.com https://*.gstatic.com https://ui-avatars.com https://images.unsplash.com https://lh3.googleusercontent.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; connect-src 'self' https://maps.googleapis.com https://*.googleapis.com https://*.firebaseio.com https://*.firebase.com https://api.ipify.org https://www.gstatic.com https://accounts.google.com;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://maps.googleapis.com https://www.gstatic.com https://cdn.jsdelivr.net https://fonts.googleapis.com https://accounts.google.com https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://unpkg.com; img-src 'self' data: blob: https://maps.gstatic.com https://maps.googleapis.com https://*.googleapis.com https://*.gstatic.com https://ui-avatars.com https://images.unsplash.com https://lh3.googleusercontent.com https://*.tile.openstreetmap.org https://*.tile.opentopomap.org; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com https://unpkg.com; connect-src 'self' https://maps.googleapis.com https://*.googleapis.com https://*.firebaseio.com https://*.firebase.com https://api.ipify.org https://www.gstatic.com https://accounts.google.com https://*.tile.openstreetmap.org https://nominatim.openstreetmap.org https://router.project-osrm.org;">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -139,7 +139,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono:wght@800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" referrerpolicy="no-referrer">
-    <link rel="stylesheet" href="css/style.css?v=30.1">
+    <!-- Leaflet CSS (Cartes Hors Ligne) -->
+    <link id="leaflet-css" rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="css/style.css?v=30.2">
     <link rel="icon" type="image/png" href="assets/icons/icon-192x192.png">
     <!-- Firebase SDK (v9 Compat) -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -198,6 +200,25 @@
 
     <video id="ar-overlay" autoplay playsinline></video>
     <div id="map"></div>
+    <!-- Carte Hors Ligne (Leaflet + OpenStreetMap) -->
+    <div id="leaflet-map" style="display:none;"></div>
+    <!-- Badge OFFLINE MODE (visible quand hors ligne) -->
+    <div id="offline-mode-badge" class="hidden" style="
+        position: fixed;
+        top: 0; left: 0; right: 0;
+        background: linear-gradient(90deg, rgba(255,0,85,0.95), rgba(180,0,60,0.95));
+        color: #fff;
+        text-align: center;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.65rem;
+        font-weight: 900;
+        letter-spacing: 3px;
+        padding: 4px 0;
+        z-index: 99997;
+        border-bottom: 1px solid rgba(255,0,85,0.5);
+        box-shadow: 0 0 15px rgba(255,0,85,0.4);
+        pointer-events: none;
+    ">🔴 MODE HORS LIGNE — CARTE LOCALE</div>
     <div id="radar-sweep" class="radar-sweep"></div>
     
     <!-- Premium Loader (HUD Startup Dashboard) -->
@@ -240,32 +261,32 @@
     <!-- Tactical HUD Overlay -->
     <div id="hud" class="tactical-layout">
         <!-- TOP ROW (Unified HUD) -->
-        <div class="tactical-top-bar" style="display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; padding: 10px;">
+        <div class="tactical-top-bar" style="display: flex; align-items: center; justify-content: space-between; gap: 15px; width: 100%; padding: 15px 20px;">
             <!-- SPEED -->
-            <div class="tactical-speed-panel" style="flex-shrink: 0;">
-                <span id="speed" class="tactical-speed-val">0</span>
-                <span class="tactical-speed-unit">km/h</span>
+            <div class="tactical-speed-panel" style="flex-shrink: 0; background: rgba(5, 10, 20, 0.7); backdrop-filter: blur(15px); padding: 5px 15px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); text-align: center;">
+                <span id="speed" class="tactical-speed-val" style="font-size: 2.8rem; font-weight: 900; letter-spacing: -1px;">0</span>
+                <span class="tactical-speed-unit" style="display: block; font-size: 0.75rem; letter-spacing: 2px; color: var(--neon-blue); margin-top: -5px;">KM/H</span>
             </div>
 
             <!-- SEARCH (Compact & Horizontal) -->
             <div id="search-container" style="flex: 1; max-width: 600px; z-index: 10000;">
-                <div style="display: flex; flex-direction: row; align-items: center; padding: 5px 15px; border-radius: 50px; background: rgba(17, 17, 17, 0.9); border: 1px solid rgba(0, 210, 255, 0.5); box-shadow: 0 4px 20px rgba(0,0,0,0.9); gap: 10px;">
-                    <div id="manual-start-box" style="flex: 1; display: flex; align-items: center; border-right: 1px solid rgba(255,255,255,0.1); padding-right: 10px;">
-                        <i class="fa-solid fa-circle-dot" style="color: var(--neon-blue); margin-right: 8px; font-size: 0.7rem;"></i>
-                        <input type="text" id="route-start" placeholder="D&eacute;part..." style="font-size: 0.8rem; color: #fff; background: transparent; border: none; width: 100%; outline: none;">
+                <div style="display: flex; flex-direction: row; align-items: center; padding: 8px 15px; border-radius: 20px; background: rgba(5, 10, 20, 0.85); backdrop-filter: blur(20px); border: 1px solid rgba(0, 242, 255, 0.3); box-shadow: 0 10px 30px rgba(0,0,0,0.5); gap: 12px;">
+                    <div id="manual-start-box" style="flex: 1; display: flex; align-items: center; border-right: 1px solid rgba(255,255,255,0.1); padding-right: 12px;">
+                        <i class="fa-solid fa-location-arrow" style="color: var(--neon-blue); margin-right: 10px; font-size: 0.9rem;"></i>
+                        <input type="text" id="route-start" placeholder="Position de départ..." style="font-size: 0.9rem; color: #fff; background: transparent; border: none; width: 100%; outline: none; height: 35px; font-weight: 500;">
                     </div>
                     <div style="flex: 1.2; display: flex; align-items: center;">
-                        <i class="fa-solid fa-location-dot" style="color: #ffb703; margin-right: 8px; font-size: 0.8rem;"></i>
-                        <input type="text" id="route-search" placeholder="Destination..." style="font-size: 0.8rem; color: #fff; background: transparent; border: none; width: 100%; outline: none;">
+                        <i class="fa-solid fa-flag-checkered" style="color: #ffb703; margin-right: 10px; font-size: 0.9rem;"></i>
+                        <input type="text" id="route-search" placeholder="Où allez-vous ?" style="font-size: 0.9rem; color: #fff; background: transparent; border: none; width: 100%; outline: none; height: 35px; font-weight: 500;">
                     </div>
-                    <button onclick="searchDestination()" style="background: var(--neon-blue); color: black; border-radius: 50%; width: 28px; height: 28px; min-width: 28px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 8px var(--neon-blue); border:none; cursor:pointer;"><i class="fa-solid fa-chevron-right" style="font-size: 0.7rem;"></i></button>
+                    <button onclick="searchDestination()" style="background: linear-gradient(135deg, var(--neon-blue), #00a2ff); color: #000; border-radius: 12px; width: 44px; height: 44px; min-width: 44px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 15px rgba(0,242,255,0.4); border:none; cursor:pointer; transition: transform 0.2s;"><i class="fa-solid fa-magnifying-glass" style="font-size: 1rem;"></i></button>
                 </div>
             </div>
 
             <!-- SENTINEL -->
-            <div id="btn-guardian-toggle" class="tactical-sentinel-badge active" onclick="toggleGuardianAngel()" style="flex-shrink: 0; scale: 0.8; transform-origin: top right;">
-                <i class="fa-solid fa-shield-halved"></i>
-                <div class="sentinel-text">Sentinel<br>Active</div>
+            <div id="btn-guardian-toggle" class="tactical-sentinel-badge active" onclick="toggleGuardianAngel()" style="flex-shrink: 0; background: rgba(5, 10, 20, 0.7); backdrop-filter: blur(15px); border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); padding: 8px 15px; display: flex; align-items: center; gap: 10px; cursor: pointer; transition: all 0.3s ease;">
+                <i class="fa-solid fa-shield-halved" style="font-size: 1.5rem; color: #2ecc71; filter: drop-shadow(0 0 5px rgba(46,204,113,0.5));"></i>
+                <div class="sentinel-text" style="font-size: 0.65rem; line-height: 1.2; text-align: left; color: #aaa; text-transform: uppercase; font-weight: bold; letter-spacing: 1px;">Sentinel<br><span style="color: #2ecc71;">Active</span></div>
                 <span id="guardian-status" class="hidden">ON</span>
             </div>
         </div>
@@ -292,33 +313,15 @@
             </div>
         </div>
 
-        <!-- SECONDARY NAV BAR (Vault Tabs) -->
-        <div id="vault-tabs" class="tactical-secondary-nav hidden" style="display: flex; justify-content: space-around; align-items: center; background: rgba(5, 10, 15, 0.85); backdrop-filter: blur(15px); border-radius: 20px 20px 0 0; padding: 10px 15px; border: 1px solid rgba(255,255,255,0.05); border-bottom: none; margin-bottom: -10px; width: 95%; align-self: center; z-index: 9999;">
-            <div class="t-nav-btn active" onclick="showVaultTab('docs')" style="color: #ffd700;">
-                <i class="fa-solid fa-file-lines"></i>
-                <span style="font-size: 0.6rem;">DOCUMENTS</span>
-            </div>
-            <div class="t-nav-btn" onclick="showVaultTab('activities')">
-                <i class="fa-solid fa-clock-rotate-left"></i>
-                <span style="font-size: 0.6rem;">ACTIVITIES</span>
-            </div>
-            <div class="t-nav-btn" onclick="showVaultTab('badges')">
-                <i class="fa-solid fa-award"></i>
-                <span style="font-size: 0.6rem;">BADGES</span>
-            </div>
-            <div class="t-nav-btn" onclick="showVaultTab('profile')">
-                <i class="fa-regular fa-user"></i>
-                <span style="font-size: 0.6rem;">PROFILE</span>
-            </div>
-        </div>
+        <!-- BOTTOM STATS PANEL (Hidden until navigation starts) -->
 
         <!-- BOTTOM NAV BAR -->
         <div class="tactical-nav-bar">
-            <button class="t-nav-btn active" onclick="document.getElementById('secure-vault-screen').classList.add('hidden'); document.getElementById('search-container').classList.remove('hidden'); document.getElementById('vault-tabs').classList.add('hidden');">
+            <button class="t-nav-btn active" onclick="document.getElementById('secure-vault-screen').classList.add('hidden'); document.getElementById('search-container').classList.remove('hidden');">
                 <i class="fa-regular fa-paper-plane"></i>
                 <span>NAV</span>
             </button>
-            <button class="t-nav-btn" onclick="document.getElementById('secure-vault-screen').classList.remove('hidden'); document.getElementById('search-container').classList.add('hidden'); document.getElementById('vault-tabs').classList.remove('hidden');">
+            <button class="t-nav-btn" onclick="document.getElementById('secure-vault-screen').classList.remove('hidden'); document.getElementById('search-container').classList.add('hidden');">
                 <i class="fa-solid fa-car-side"></i>
                 <span>VEHICLE</span>
             </button>
@@ -326,7 +329,7 @@
                 <i class="fa-solid fa-music"></i>
                 <span>AUDIO</span>
             </button>
-            <button class="t-nav-btn" onclick="document.getElementById('secure-vault-screen').classList.remove('hidden'); document.getElementById('search-container').classList.add('hidden'); document.getElementById('vault-tabs').classList.remove('hidden');">
+            <button class="t-nav-btn" onclick="document.getElementById('secure-vault-screen').classList.remove('hidden'); document.getElementById('search-container').classList.add('hidden');">
                 <i class="fa-solid fa-gear"></i>
                 <span>SETTINGS</span>
             </button>
@@ -446,6 +449,14 @@
                 <li id="btn-parking-toggle" onclick="toggleParkingMode()"><i class="fa-solid fa-shield-halved"></i> Mode Parking : OFF</li>
                 <li id="btn-install-pwa" class="hidden" onclick="installPWA()"><i class="fa-solid fa-download"></i> Installer l'App <span class="badge" style="background:#2ecc71;">PRO</span></li>
                 <li onclick="shareApp()"><i class="fa-solid fa-share-nodes"></i> Partager / Share</li>
+
+                <!-- ═══════════════════════════════════════════════ -->
+                <!-- PANNEAU CARTES HORS LIGNE                      -->
+                <!-- ═══════════════════════════════════════════════ -->
+                <li id="menu-offline-maps" onclick="toggleOfflinePanel()" style="color:#00f2ff; border:1px solid rgba(0,242,255,0.3); border-radius:10px; margin-top:10px;">
+                    <i class="fa-solid fa-map"></i> Cartes Hors Ligne
+                    <span id="offline-status-dot" class="badge" style="background:#444; font-size:0.5rem; margin-left:5px;">CHARGEMENT...</span>
+                </li>
                 <div style="margin-top:20px; padding:15px; text-align:center; opacity:0.5; font-size:0.6rem; letter-spacing:2px; border-top:1px solid rgba(255,255,255,0.05); color:white;">
                     <div id="sentinel-status" style="margin-bottom:5px; color:#2ecc71;"><i class="fa-solid fa-microchip fa-pulse"></i> SENTINEL ACTIVE : OPTIMAL</div>
                     <i class="fa-solid fa-microchip"></i> SECURED BY NETIZEN-OS<br>
@@ -495,6 +506,135 @@
         </div>
     </div>
 
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- PANNEAU HORS LIGNE (slide-in depuis le sidebar)        -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <div id="offline-panel" class="hidden" style="
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.5);
+        z-index: 12000;
+        backdrop-filter: blur(5px);
+    " onclick="closeOfflinePanel(event)">
+        <div style="
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            background: linear-gradient(180deg, #060e18 0%, #030810 100%);
+            border-top: 1px solid rgba(0,242,255,0.3);
+            border-radius: 25px 25px 0 0;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 -20px 60px rgba(0,0,0,0.9);
+            padding-bottom: env(safe-area-inset-bottom, 20px);
+        " onclick="event.stopPropagation()">
+
+            <!-- Header -->
+            <div style="padding:20px 20px 0; display:flex; align-items:center; justify-content:space-between;">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <div style="width:42px;height:42px;border-radius:50%;background:rgba(0,242,255,0.1);border:1px solid rgba(0,242,255,0.5);display:flex;align-items:center;justify-content:center;">
+                        <i class="fa-solid fa-map" style="color:var(--neon-blue);"></i>
+                    </div>
+                    <div>
+                        <h2 style="margin:0;font-size:1.1rem;letter-spacing:1px;">CARTES HORS LIGNE</h2>
+                        <div id="offline-tiles-stat" style="font-size:0.65rem;color:#555;font-family:monospace;">Calcul du cache...</div>
+                    </div>
+                </div>
+                <button onclick="closeOfflinePanel()" style="background:rgba(255,255,255,0.05);border:1px solid #333;color:#aaa;width:35px;height:35px;border-radius:50%;font-size:0.9rem;cursor:pointer;">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Statut réseau -->
+            <div id="offline-network-status" style="margin:15px 20px 0;padding:10px 15px;border-radius:12px;font-size:0.8rem;font-family:monospace;letter-spacing:1px;">
+                <!-- Mis à jour dynamiquement par JS -->
+            </div>
+
+            <!-- Télécharger une zone -->
+            <div style="margin:15px 20px 0;padding:20px;background:rgba(0,242,255,0.05);border:1px solid rgba(0,242,255,0.2);border-radius:15px;">
+                <div style="font-size:0.8rem;color:var(--neon-blue);font-weight:bold;margin-bottom:12px;letter-spacing:1px;">
+                    <i class="fa-solid fa-download"></i> TÉLÉCHARGER UNE ZONE
+                </div>
+                <div style="display:flex;gap:10px;margin-bottom:12px;">
+                    <div style="flex:1;">
+                        <label style="font-size:0.65rem;color:#666;display:block;margin-bottom:5px;">NOM DE LA ZONE</label>
+                        <input id="offline-zone-name" type="text" placeholder="Ex: Ma Ville, Vacances..." style="
+                            width:100%; background:rgba(255,255,255,0.05);
+                            border:1px solid rgba(255,255,255,0.1);
+                            border-radius:8px; padding:8px 12px;
+                            color:#fff; font-size:0.8rem; outline:none;
+                        ">
+                    </div>
+                    <div style="flex-shrink:0;">
+                        <label style="font-size:0.65rem;color:#666;display:block;margin-bottom:5px;">RAYON (km)</label>
+                        <select id="offline-radius-select" style="
+                            background:rgba(255,255,255,0.05);
+                            border:1px solid rgba(255,255,255,0.1);
+                            border-radius:8px; padding:8px 12px;
+                            color:#fff; font-size:0.8rem; outline:none;
+                        ">
+                            <option value="8">8 km</option>
+                            <option value="15" selected>15 km</option>
+                            <option value="25">25 km</option>
+                            <option value="40">40 km</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="font-size:0.65rem;color:#555;margin-bottom:12px;">
+                    📍 Utilise votre position GPS actuelle comme centre de la zone
+                </div>
+                <button onclick="window.OfflineMapManager && window.OfflineMapManager.downloadCurrentZone()" style="
+                    width:100%;
+                    background:linear-gradient(135deg, rgba(0,242,255,0.2), rgba(0,150,200,0.2));
+                    border:1px solid var(--neon-blue);
+                    color:var(--neon-blue);
+                    border-radius:12px;
+                    padding:12px;
+                    font-family:'JetBrains Mono',monospace;
+                    font-size:0.8rem;
+                    font-weight:bold;
+                    letter-spacing:1px;
+                    cursor:pointer;
+                    transition:all 0.3s;
+                    display:flex;
+                    align-items:center;
+                    justify-content:center;
+                    gap:10px;
+                " onmouseover="this.style.background='rgba(0,242,255,0.15)'" onmouseout="this.style.background='linear-gradient(135deg,rgba(0,242,255,0.08),rgba(0,150,200,0.08))'">
+                    <i class="fa-solid fa-cloud-arrow-down"></i>
+                    TÉLÉCHARGER MA ZONE ACTUELLE
+                </button>
+            </div>
+
+            <!-- Liste des zones -->
+            <div style="margin:15px 20px 0;">
+                <div style="font-size:0.8rem;color:#aaa;font-weight:bold;margin-bottom:10px;letter-spacing:1px;">
+                    <i class="fa-solid fa-layer-group"></i> ZONES ENREGISTRÉES
+                </div>
+                <div id="offline-zones-list">
+                    <!-- Rempli par OfflineMapManager.refreshZoneList() -->
+                </div>
+            </div>
+
+            <!-- Bouton tout effacer -->
+            <div style="margin:10px 20px 25px;">
+                <button onclick="window.OfflineMapManager && window.OfflineMapManager.clearAllTiles()" style="
+                    width:100%;
+                    background:rgba(255,0,85,0.08);
+                    border:1px solid rgba(255,0,85,0.3);
+                    color:#ff4d6d;
+                    border-radius:12px;
+                    padding:10px;
+                    font-size:0.75rem;
+                    letter-spacing:1px;
+                    cursor:pointer;
+                    font-family:'JetBrains Mono',monospace;
+                ">
+                    <i class="fa-solid fa-trash-can"></i> VIDER TOUT LE CACHE
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Screen Overlays (Popups) -->
     <div id="screen-overlay" class="hidden">
         <div class="screen-card glassmorphism">
@@ -523,6 +663,10 @@
     <div id="social-ticker" class="hidden">
         <div id="ticker-text" style="font-weight: 500;">Initialisation sÃ©curisÃ©e...</div>
     </div>
+    <!-- Leaflet JS (Cartes Hors Ligne) -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Module Cartes Hors Ligne -->
+    <script src="js/offline-map.js?v=52022"></script>
     <script src="js/app.js?v=52022"></script>
     <script>
         if ('serviceWorker' in navigator) {
@@ -572,21 +716,21 @@
     <input type="file" id="abuse-photo-input" accept="image/*" capture="camera" style="display:none;">
 
     <!-- SECURE VAULT SCREEN -->
-    <div id="secure-vault-screen" class="hidden fullscreen-overlay" style="background:#111; color:#fff; overflow-y:auto; z-index:10000; padding-bottom:80px;">
+    <div id="secure-vault-screen" class="hidden fullscreen-overlay" style="background: linear-gradient(180deg, #05080f 0%, #0a111c 100%); color:#fff; overflow-y:auto; z-index:10000; padding-bottom:100px;">
         <div style="text-align:center; padding:30px 20px 10px;">
             <i class="fa-solid fa-lock" style="font-size:3rem; color:#ffd700; filter:drop-shadow(0 0 10px #ffd700); margin-bottom:10px;"></i>
             <h1 style="color:#ffd700; margin:0; font-size:1.8rem; letter-spacing:1px;">SECURE VAULT</h1>
             <p style="color:#aaa; font-size:0.9rem; margin-top:5px;">Premium Digital Storage</p>
         </div>
 
-        <div style="margin:20px; border:1px solid #444; border-radius:15px; padding:20px; background:#1a1a1a;">
+        <div style="margin: 20px 25px; border: 1px solid rgba(255, 215, 0, 0.2); border-radius: 20px; padding: 25px; background: rgba(5, 10, 20, 0.6); backdrop-filter: blur(10px); box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
             <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
-                <div style="display:flex; gap:15px;">
-                    <img src="https://ui-avatars.com/api/?name=Alex+V&background=ffd700&color=000" style="width:50px; height:50px; border-radius:50%; border:2px solid #ffd700;" alt="Avatar">
+                <div style="display:flex; gap:15px; align-items: center;">
+                    <img src="https://ui-avatars.com/api/?name=Alex+V&background=ffd700&color=000" style="width:50px; height:50px; border-radius:14px; border:1px solid rgba(255, 215, 0, 0.5);" alt="Avatar">
                     <div>
-                        <div style="font-size:0.7rem; color:#888;">RIDER:</div>
-                        <div style="font-size:1.2rem; font-weight:bold;">Alex V.</div>
-                        <div style="font-size:0.8rem; color:#ffd700;">Rank: Elite Vault Keeper</div>
+                        <div style="font-size:0.7rem; color:#888; letter-spacing: 1px;">RIDER</div>
+                        <div style="font-size:1.2rem; font-weight:900;">Alex V.</div>
+                        <div style="font-size:0.75rem; color:#ffd700;">Rank: Elite Vault Keeper</div>
                     </div>
                 </div>
                 <div style="text-align:right;">
@@ -608,48 +752,48 @@
             </div>
         </div>
 
-        <h2 style="margin:20px; font-size:1.2rem;">Digital Documents</h2>
-        <div style="padding:0 20px; display:flex; flex-direction:column; gap:15px;">
-            <div class="doc-card" style="border:1px solid #ffd700; border-radius:15px; padding:15px; display:flex; align-items:center; gap:15px; background:rgba(255,215,0,0.05);">
-                <div style="width:50px; height:50px; border-radius:10px; border:1px solid #ffd700; display:flex; align-items:center; justify-content:center; font-size:1.5rem; color:#ffd700;"><i class="fa-solid fa-file-invoice"></i></div>
-                <div style="flex:1;">
-                    <div style="font-weight:bold; font-size:1rem;">Insurance Policy</div>
-                    <div style="font-size:0.75rem; color:#aaa;">Car/Health<br>Expires: 12/24/2025</div>
-                    <div style="font-size:0.6rem; color:#666; margin-top:5px;">1 hours ago â€¢ 9.3 MB</div>
+        <h2 style="margin: 25px 25px 15px; font-size: 1.3rem; font-weight: 800; letter-spacing: 0.5px;">Digital Documents</h2>
+        <div style="padding: 0 25px; display: flex; flex-direction: column; gap: 20px;">
+            <div class="doc-card" style="border: 1px solid rgba(255, 215, 0, 0.2); border-radius: 20px; padding: 20px; display: flex; align-items: center; gap: 20px; background: rgba(5, 10, 20, 0.6); backdrop-filter: blur(10px); transition: transform 0.2s, box-shadow 0.2s; cursor: pointer;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 5px 15px rgba(255,215,0,0.1)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
+                <div style="width: 55px; height: 55px; border-radius: 14px; border: 1px solid rgba(255, 215, 0, 0.4); display: flex; align-items: center; justify-content: center; font-size: 1.6rem; color: #ffd700; background: rgba(255, 215, 0, 0.05);"><i class="fa-solid fa-file-invoice"></i></div>
+                <div style="flex: 1;">
+                    <div style="font-weight: 800; font-size: 1.05rem; letter-spacing: 0.5px;">Insurance Policy</div>
+                    <div style="font-size: 0.8rem; color: #aaa; margin-top: 4px;">Car/Health<br>Expires: 12/24/2025</div>
+                    <div style="font-size: 0.65rem; color: #666; margin-top: 8px; font-family: 'JetBrains Mono', monospace;">1 hours ago • 9.3 MB</div>
                 </div>
-                <div style="text-align:center;">
-                    <div style="font-size:0.6rem; font-weight:bold; color:#ffd700; border:1px solid #ffd700; padding:2px 5px; border-radius:10px; margin-bottom:10px; letter-spacing:1px;">VERIFIED</div>
-                    <button style="background:transparent; border:1px solid #ffd700; color:#ffd700; border-radius:15px; padding:5px 15px; font-size:0.8rem;">View</button>
-                </div>
-            </div>
-            <div class="doc-card" style="border:1px solid #ffd700; border-radius:15px; padding:15px; display:flex; align-items:center; gap:15px; background:rgba(255,215,0,0.05);">
-                <div style="width:50px; height:50px; border-radius:10px; border:1px solid #ffd700; display:flex; align-items:center; justify-content:center; font-size:1.5rem; color:#ffd700;"><i class="fa-solid fa-house"></i></div>
-                <div style="flex:1;">
-                    <div style="font-weight:bold; font-size:1rem;">Property Title Deed</div>
-                    <div style="font-size:0.75rem; color:#aaa;">Home<br>Registered: 05/18/2023</div>
-                    <div style="font-size:0.6rem; color:#666; margin-top:5px;">1 hours ago â€¢ 3.3 MB</div>
-                </div>
-                <div style="text-align:center;">
-                    <div style="font-size:0.6rem; font-weight:bold; color:#ffd700; border:1px solid #ffd700; padding:2px 5px; border-radius:10px; margin-bottom:10px; letter-spacing:1px;">VERIFIED</div>
-                    <button style="background:transparent; border:1px solid #ffd700; color:#ffd700; border-radius:15px; padding:5px 15px; font-size:0.8rem;">View</button>
+                <div style="text-align: center; display: flex; flex-direction: column; align-items: center; gap: 10px;">
+                    <div style="font-size: 0.6rem; font-weight: 800; color: #ffd700; border: 1px solid rgba(255, 215, 0, 0.3); padding: 4px 8px; border-radius: 12px; letter-spacing: 1.5px; background: rgba(255, 215, 0, 0.05);">VERIFIED</div>
+                    <button style="background: transparent; border: none; color: #ffd700; padding: 5px; font-size: 1.2rem; cursor: pointer;"><i class="fa-solid fa-circle-chevron-right"></i></button>
                 </div>
             </div>
-            <div class="doc-card" style="border:1px solid #ffd700; border-radius:15px; padding:15px; display:flex; align-items:center; gap:15px; background:rgba(255,215,0,0.05);">
-                <div style="width:50px; height:50px; border-radius:10px; border:1px solid #ffd700; display:flex; align-items:center; justify-content:center; font-size:1.5rem; color:#ffd700;"><i class="fa-solid fa-id-card"></i></div>
-                <div style="flex:1;">
-                    <div style="font-weight:bold; font-size:1rem;">Rider License</div>
-                    <div style="font-size:0.75rem; color:#aaa;">Profile<br>Valid Thru: 01/10/2028</div>
-                    <div style="font-size:0.6rem; color:#666; margin-top:5px;">1 hours ago â€¢ 2.3 MB</div>
+            <div class="doc-card" style="border: 1px solid rgba(255, 215, 0, 0.2); border-radius: 20px; padding: 20px; display: flex; align-items: center; gap: 20px; background: rgba(5, 10, 20, 0.6); backdrop-filter: blur(10px); transition: transform 0.2s, box-shadow 0.2s; cursor: pointer;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 5px 15px rgba(255,215,0,0.1)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
+                <div style="width: 55px; height: 55px; border-radius: 14px; border: 1px solid rgba(255, 215, 0, 0.4); display: flex; align-items: center; justify-content: center; font-size: 1.6rem; color: #ffd700; background: rgba(255, 215, 0, 0.05);"><i class="fa-solid fa-house"></i></div>
+                <div style="flex: 1;">
+                    <div style="font-weight: 800; font-size: 1.05rem; letter-spacing: 0.5px;">Property Title Deed</div>
+                    <div style="font-size: 0.8rem; color: #aaa; margin-top: 4px;">Home<br>Registered: 05/18/2023</div>
+                    <div style="font-size: 0.65rem; color: #666; margin-top: 8px; font-family: 'JetBrains Mono', monospace;">1 hours ago • 3.3 MB</div>
                 </div>
-                <div style="text-align:center;">
-                    <div style="font-size:0.6rem; font-weight:bold; color:#ffd700; border:1px solid #ffd700; padding:2px 5px; border-radius:10px; margin-bottom:10px; letter-spacing:1px;">VERIFIED</div>
-                    <button style="background:transparent; border:1px solid #ffd700; color:#ffd700; border-radius:15px; padding:5px 15px; font-size:0.8rem;">View</button>
+                <div style="text-align: center; display: flex; flex-direction: column; align-items: center; gap: 10px;">
+                    <div style="font-size: 0.6rem; font-weight: 800; color: #ffd700; border: 1px solid rgba(255, 215, 0, 0.3); padding: 4px 8px; border-radius: 12px; letter-spacing: 1.5px; background: rgba(255, 215, 0, 0.05);">VERIFIED</div>
+                    <button style="background: transparent; border: none; color: #ffd700; padding: 5px; font-size: 1.2rem; cursor: pointer;"><i class="fa-solid fa-circle-chevron-right"></i></button>
+                </div>
+            </div>
+            <div class="doc-card" style="border: 1px solid rgba(255, 215, 0, 0.2); border-radius: 20px; padding: 20px; display: flex; align-items: center; gap: 20px; background: rgba(5, 10, 20, 0.6); backdrop-filter: blur(10px); transition: transform 0.2s, box-shadow 0.2s; cursor: pointer;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 5px 15px rgba(255,215,0,0.1)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
+                <div style="width: 55px; height: 55px; border-radius: 14px; border: 1px solid rgba(255, 215, 0, 0.4); display: flex; align-items: center; justify-content: center; font-size: 1.6rem; color: #ffd700; background: rgba(255, 215, 0, 0.05);"><i class="fa-solid fa-id-card"></i></div>
+                <div style="flex: 1;">
+                    <div style="font-weight: 800; font-size: 1.05rem; letter-spacing: 0.5px;">Rider License</div>
+                    <div style="font-size: 0.8rem; color: #aaa; margin-top: 4px;">Profile<br>Valid Thru: 01/10/2028</div>
+                    <div style="font-size: 0.65rem; color: #666; margin-top: 8px; font-family: 'JetBrains Mono', monospace;">1 hours ago • 2.3 MB</div>
+                </div>
+                <div style="text-align: center; display: flex; flex-direction: column; align-items: center; gap: 10px;">
+                    <div style="font-size: 0.6rem; font-weight: 800; color: #ffd700; border: 1px solid rgba(255, 215, 0, 0.3); padding: 4px 8px; border-radius: 12px; letter-spacing: 1.5px; background: rgba(255, 215, 0, 0.05);">VERIFIED</div>
+                    <button style="background: transparent; border: none; color: #ffd700; padding: 5px; font-size: 1.2rem; cursor: pointer;"><i class="fa-solid fa-circle-chevron-right"></i></button>
                 </div>
             </div>
         </div>
 
         <!-- Vault Bottom Nav -->
-        <div style="position:fixed; bottom:0; left:0; width:100%; display:flex; justify-content:space-around; padding:15px 0 25px; background:#111; border-top:1px solid #333;">
+        <div style="position:fixed; bottom:0; left:0; width:100%; display:flex; justify-content:space-around; padding:15px 0 calc(15px + env(safe-area-inset-bottom, 0px)); background:#0a0a0a; border-top:1px solid #222; box-shadow: 0 -10px 30px rgba(0,0,0,0.8); z-index:10002;">
             <div style="text-align:center; color:#666;"><i class="fa-solid fa-house" style="font-size:1.2rem; margin-bottom:5px; display:block;"></i><span style="font-size:0.7rem;">Home</span></div>
             <div style="text-align:center; color:#ffd700;"><i class="fa-solid fa-file-lines" style="font-size:1.2rem; margin-bottom:5px; display:block;"></i><span style="font-size:0.7rem;">Documents</span></div>
             <div style="text-align:center; color:#666;"><i class="fa-solid fa-clock-rotate-left" style="font-size:1.2rem; margin-bottom:5px; display:block;"></i><span style="font-size:0.7rem;">Activities</span></div>
