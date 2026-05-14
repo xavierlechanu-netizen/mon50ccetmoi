@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mon50ccetmoi-v50020-ULTIMATE';
+const CACHE_NAME = 'mon50ccetmoi-v50108-GOLD';
 const STATIC_ASSETS = [
   './assets/icons/icon-192x192.png',
   './assets/icons/icon-512x512.png',
@@ -8,7 +8,7 @@ const STATIC_ASSETS = [
 
 // Install : only pre-cache truly static assets (icons, manifest)
 self.addEventListener('install', (event) => {
-  console.log('[ServiceWorker] Installing v50020...');
+  console.log('[ServiceWorker] Installing v50108-GOLD...');
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(STATIC_ASSETS);

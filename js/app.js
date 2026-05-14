@@ -88,7 +88,7 @@ history.pushState(null, null, window.location.pathname);
 // escapeHTML est maintenant défini dans auth.js (global)
 
 // --- BOOT ---
-console.log("mon50ccetmoi v50.0.17-ULTIMATE : Production Ready.");
+console.log("mon50ccetmoi v50.1.8-GOLD-ULTIMATE : Production Ready.");
 
 let map;
 let directionsService;
@@ -157,7 +157,7 @@ const GOOGLE_MAPS_STYLE = [
 
 window.appStarted = false;
 
-window.initMapController = function() {
+window.initMapController = async function() {
     if (map) return; 
     console.log("mon50cc Maps : Début de l'initialisation du contrôleur...");
     
@@ -173,17 +173,26 @@ window.initMapController = function() {
             throw new Error("SDK_NOT_LOADED");
         }
 
+        // Modern Library Imports
+        const { Map } = await google.maps.importLibrary("maps");
+        const { AdvancedMarkerElement, PinElement } = await google.maps.importLibrary("marker");
+        const { Route } = await google.maps.importLibrary("routes");
+        const { Autocomplete } = await google.maps.importLibrary("places");
+
+        window.googleLibraries = { Map, AdvancedMarkerElement, PinElement, Route, Autocomplete };
+
         console.log("mon50cc Maps : Création de l'objet Map...");
-        map = new google.maps.Map(mapElement, {
+        map = new Map(mapElement, {
             center: { lat: 48.8566, lng: 2.3522 },
             zoom: 16,
             styles: GOOGLE_MAPS_STYLE,
             disableDefaultUI: true,
             zoomControl: false,
             gestureHandling: 'greedy',
-            mapId: CONFIG.MAPS.MAP_ID || null
+            mapId: CONFIG.MAPS.MAP_ID || "DEMO_MAP_ID" // Fallback pour Advanced Markers
         });
 
+        // DirectionsService est déprécié mais on le garde temporairement pour le fallback
         directionsService = new google.maps.DirectionsService();
         directionsRenderer = new google.maps.DirectionsRenderer({ 
             map: map, 
@@ -196,13 +205,13 @@ window.initMapController = function() {
 
         // Autocomplete pour le Départ (Optionnel)
         const startInput = document.getElementById('route-start');
-        if (startInput && google.maps.places) {
-            new google.maps.places.Autocomplete(startInput);
+        if (startInput) {
+            new Autocomplete(startInput);
         }
 
         const input = document.getElementById('route-search');
-        if (input && google.maps.places) {
-            const autocomplete = new google.maps.places.Autocomplete(input);
+        if (input) {
+            const autocomplete = new Autocomplete(input);
             autocomplete.bindTo('bounds', map);
             autocomplete.addListener('place_changed', () => {
                 const place = autocomplete.getPlace();
@@ -253,7 +262,7 @@ window.initMapController = function() {
 window.startApp = function() {
     if (window.appStarted) return;
     window.appStarted = true;
-    console.log("mon50cc Master Controller : Démarrage de la séquence d'initialisation v50.0.17-ULTIMATE...");
+    console.log("mon50cc Master Controller : Démarrage de la séquence d'initialisation v50.1.8-GOLD-ULTIMATE...");
     runCinematicStartup();
     
     checkTrialExpiration();
@@ -288,7 +297,7 @@ window.startApp = function() {
         updateUILabels();
         if (typeof renderCommunityMarkers === "function") renderCommunityMarkers();
         if (typeof simulateLiveFleet === "function") simulateLiveFleet();
-        console.log("mon50cc v50.0.17-ULTIMATE : Système prêt.");
+        console.log("mon50cc v50.1.8-GOLD-ULTIMATE : Système prêt.");
     }, 3500);
 
     // Lancement de la géolocalisation
@@ -1166,33 +1175,76 @@ checkNightMode();
 
 // --- 3. ROUTAGE ---
 let destinationMarker = null;
+let currentRoutePolylines = [];
+let currentRouteMarkers = [];
 
-function calculateRouteSansAutoroute(start, end) {
+async function calculateRouteSansAutoroute(start, end) {
     if (!start || !end) {
         console.error("mon50cc Maps : Points de départ ou d'arrivée invalides.", {start, end});
         if (!start) speak("Signal GPS insuffisant pour démarrer l'itinéraire.");
         return;
     }
-    const request = {
-        origin: start,
-        destination: end,
-        travelMode: 'DRIVING',
-        avoidHighways: true,
-        avoidTolls: true,
-        // En mode rodage, on force la main sur les routes départementales/secondaires
-        provideRouteAlternatives: window.isRodageActive
-    };
 
-    directionsService.route(request, (result, status) => {
-        if (status === 'OK') {
-            directionsRenderer.setDirections(result);
-            
-            const leg = result.routes[0].legs[0];
-            const nextStep = leg.steps[0];
-            
+    // Nettoyage des tracés précédents
+    currentRoutePolylines.forEach(p => p.setMap(null));
+    currentRoutePolylines = [];
+    currentRouteMarkers.forEach(m => m.setMap(null));
+    currentRouteMarkers = [];
+    if (directionsRenderer) directionsRenderer.setMap(null);
+
+    try {
+        const { Route, AdvancedMarkerElement, PinElement } = window.googleLibraries;
+        
+        // Conversion des LatLng pour le nouveau format (Google Expects raw numbers or LatLng object)
+        const request = {
+            origin: { location: { latLng: { latitude: start.lat(), longitude: start.lng() } } },
+            destination: { location: { latLng: { latitude: end.lat(), longitude: end.lng() } } },
+            travelMode: 'DRIVE',
+            routeModifiers: {
+                avoidHighways: true,
+                avoidTolls: true
+            },
+            routingPreference: 'TRAFFIC_AWARE',
+            units: 'METRIC',
+            languageCode: 'fr-FR'
+        };
+
+        console.log("mon50cc Routes : Calcul via New Routes API...");
+        const { routes } = await Route.computeRoutes(request, {
+            fields: ['routes.legs', 'routes.polyline', 'routes.distanceMeters', 'routes.duration']
+        });
+
+        if (routes && routes.length > 0) {
+            const route = routes[0];
+            const leg = route.legs[0];
+
+            // Rendu de la Polyline (Cyberpunk Cyan)
+            const polylines = route.createPolylines();
+            polylines.forEach(p => {
+                p.setOptions({
+                    strokeColor: '#00f2ff',
+                    strokeOpacity: 0.8,
+                    strokeWeight: 6,
+                    map: map
+                });
+                currentRoutePolylines.push(p);
+            });
+
+            // Marqueur de Destination (Advanced Marker)
+            const destPin = new PinElement({ background: "#ff00ff", borderColor: "#fff", glyphColor: "#fff" });
+            const destMarker = new AdvancedMarkerElement({
+                map,
+                position: end,
+                content: destPin.element,
+                title: "Destination"
+            });
+            currentRouteMarkers.push(destMarker);
+
             // Affichage du bandeau
             const infoBar = document.getElementById('nav-info-bar');
-            if (infoBar) infoBar.style.display = 'block';
+            if (infoBar) {
+                infoBar.style.setProperty('display', 'flex', 'important');
+            }
             
             const btnStop = document.getElementById('btn-stop-nav');
             if (btnStop) btnStop.classList.remove('hidden');
@@ -1202,22 +1254,122 @@ function calculateRouteSansAutoroute(start, end) {
             const timeEl = document.getElementById('nav-time');
             const etaEl = document.getElementById('nav-eta');
 
-            if (distEl) distEl.textContent = leg.distance.text;
-            if (timeEl) timeEl.textContent = leg.duration.text;
+            const distKm = (route.distanceMeters / 1000).toFixed(1) + " km";
+            let durationSec = parseInt(route.duration.replace('s', ''));
+
+            // --- AJUSTEMENT 50cc ---
+            // Un 50cc est bridé à 45km/h. On prend une vitesse moyenne max de 40 km/h (11.11 m/s)
+            // Si Google prévoit une vitesse moyenne supérieure (ex: routes hors agglo), on recalcule.
+            const maxSpeedMs = 40 / 3.6; 
+            const googleSpeedMs = route.distanceMeters / durationSec;
+            if (googleSpeedMs > maxSpeedMs) {
+                durationSec = Math.round(route.distanceMeters / maxSpeedMs);
+                if (window.Telemetry) window.Telemetry.addLog("INFO", `ETA ajusté pour 50cc (vitesse native trop élevée).`);
+            }
+
+            let durationText;
+            const totalMins = Math.floor(durationSec / 60);
+            if (totalMins >= 60) {
+                durationText = `${Math.floor(totalMins/60)} h ${totalMins%60} min`;
+            } else {
+                durationText = `${totalMins} min`;
+            }
+
+            if (distEl) distEl.textContent = distKm;
+            if (timeEl) timeEl.textContent = durationText;
             if (etaEl) {
-                const arrivalTime = new Date(Date.now() + leg.duration.value * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                const arrivalTime = new Date(Date.now() + durationSec * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
                 etaEl.textContent = arrivalTime;
             }
 
-            // Détection de ferry
+            // Détection de ferry (Adaptée au nouveau format)
+            window.routeFerries = leg.steps.filter(s => {
+                const instr = (s.navigationInstruction?.instructions || "").toLowerCase();
+                return instr.includes('ferry') || (s.maneuver && s.maneuver.toLowerCase().includes('ferry'));
+            });
+            lastSpokenFerryIndex = -1;
+
+            if (window.routeFerries.length > 0) {
+                setTimeout(() => speak('ferry_detected'), 4000);
+                if (window.NeuralHUD && typeof window.NeuralHUD.logToConsole === "function") {
+                    window.NeuralHUD.logToConsole(`NAV_INTEL: FERRY_CROSSING_AHEAD (${window.routeFerries.length})`);
+                }
+            }
+
+            if (window.isRodageActive) {
+                speak(`Itinéraire rodage calculé. ${distKm} à parcourir.`);
+            } else {
+                speak(`Itinéraire calculé. ${distKm}, arrivée prévue à ${etaEl ? etaEl.textContent : ''}.`);
+            }
+
+            return; // Succès
+        }
+    } catch (err) {
+        console.warn("mon50cc Routes : Échec New Routes API, basculement vers Legacy...", err);
+    }
+
+    // FALLBACK : DirectionsService Legacy
+    const legacyRequest = {
+        origin: start,
+        destination: end,
+        travelMode: 'DRIVING',
+        avoidHighways: true,
+        avoidTolls: true,
+        provideRouteAlternatives: window.isRodageActive
+    };
+
+    directionsService.route(legacyRequest, (result, status) => {
+        if (status === 'OK') {
+            if (directionsRenderer) {
+                directionsRenderer.setMap(map);
+                directionsRenderer.setDirections(result);
+            }
+            
+            const leg = result.routes[0].legs[0];
+            const infoBar = document.getElementById('nav-info-bar');
+            if (infoBar) {
+                infoBar.style.setProperty('display', 'flex', 'important');
+            }
+            
+            const distEl = document.getElementById('nav-dist');
+            const timeEl = document.getElementById('nav-time');
+            const etaEl = document.getElementById('nav-eta');
+
+            if (distEl) distEl.textContent = leg.distance.text;
+
+            let durationSec = leg.duration.value;
+            const distanceMeters = leg.distance.value;
+
+            // --- AJUSTEMENT 50cc ---
+            const maxSpeedMs = 40 / 3.6; 
+            const googleSpeedMs = distanceMeters / durationSec;
+            if (googleSpeedMs > maxSpeedMs) {
+                durationSec = Math.round(distanceMeters / maxSpeedMs);
+            }
+
+            let durationTextStr;
+            const totalMins = Math.floor(durationSec / 60);
+            if (totalMins >= 60) {
+                durationTextStr = `${Math.floor(totalMins/60)} h ${totalMins%60} min`;
+            } else {
+                durationTextStr = `${totalMins} min`;
+            }
+
+            if (timeEl) timeEl.textContent = durationTextStr;
+            if (etaEl) {
+                const arrivalTime = new Date(Date.now() + durationSec * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                etaEl.textContent = arrivalTime;
+            }
+
+            // Détection ferry (Legacy)
             window.routeFerries = leg.steps.filter(s => 
                 s.instructions.toLowerCase().includes('ferry') || 
                 (s.maneuver && s.maneuver.toLowerCase().includes('ferry'))
             );
-            lastSpokenFerryIndex = -1; // Reset pour le nouvel itinéraire
+            lastSpokenFerryIndex = -1;
 
             if (window.routeFerries.length > 0) {
-                setTimeout(() => speak('ferry_detected'), 4000); // On attend un peu après l'annonce de calcul
+                setTimeout(() => speak('ferry_detected'), 4000);
                 if (window.NeuralHUD && typeof window.NeuralHUD.logToConsole === "function") {
                     window.NeuralHUD.logToConsole(`NAV_INTEL: FERRY_CROSSING_AHEAD (${window.routeFerries.length})`);
                 }

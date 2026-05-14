@@ -16,7 +16,7 @@ const CONFIG = {
     },
     
     // App Versioning
-    VERSION: "50.0.17-ULTIMATE",
+    VERSION: "50.1.8-GOLD",
 
     // Firebase Cloud Database (Firestore)
     FIREBASE: {

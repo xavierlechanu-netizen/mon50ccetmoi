@@ -1,0 +1,3 @@
+@echo off
+echo [INFO] Publication du bundle v52015...
+cmd /c bubblewrap play publish --aabPath app\build\outputs\bundle\release\app-release.aab

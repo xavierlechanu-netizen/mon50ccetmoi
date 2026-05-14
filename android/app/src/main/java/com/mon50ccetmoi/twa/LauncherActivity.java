@@ -31,7 +31,7 @@ public class LauncherActivity
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        EdgeToEdge.enable(this);
+        // EdgeToEdge removed: incompatible with androidbrowserhelper LauncherActivity
         super.onCreate(savedInstanceState);
         
         // Android 16 Compliance: Remove strict orientation restrictions for large screens
