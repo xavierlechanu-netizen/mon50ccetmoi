@@ -57,7 +57,7 @@ android {
         applicationId "com.mon50ccetmoi.twa"
         minSdkVersion 21
         targetSdkVersion 35
-        versionCode 52020
+        versionCode 52026
         versionName "50.1.8"
 
         // The name for the application
