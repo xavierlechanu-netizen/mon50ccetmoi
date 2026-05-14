@@ -402,8 +402,8 @@ function startGeolocation() {
 
     const geoOptions = {
         enableHighAccuracy: true,
-        timeout: 15000,
-        maximumAge: 0
+        timeout: 30000,
+        maximumAge: 10000
     };
 
     const onError = (err) => {
