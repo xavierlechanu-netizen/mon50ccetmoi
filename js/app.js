@@ -3658,29 +3658,37 @@ window.showPage = function(page) {
         const content = document.getElementById('screen-content');
         if (!overlay || !content) return;
         overlay.classList.remove('hidden');
+        
+        window.BlackBoxDict = window.BlackBoxDict || {
+            'fr': { title: "Black Box Assurance", subtitle: "Rapport d'Expertise NumÃ©rique", desc: "En cas d'accident, votre Black Box enregistre automatiquement la vitesse, la trajectoire GPS et l'angle d'inclinaison.<br><br>Ce rapport certifiÃ© est <strong style='color:#2ecc71;'>gratuit pour vous</strong>. Si votre compagnie d'assurance demande un rapport officiel certifiÃ©, ce service leur est facturÃ© <strong style='color:#f1c40f;'>49,90â‚¬ par dossier</strong>.", available: "DonnÃ©es disponibles", pts: "points GPS enregistrÃ©s lors du dernier trajet.", replay: "Rejouer le Trajet", generate: "GÃ©nÃ©rer le Rapport PDF", nodata: "Aucun trajet enregistrÃ©. Lancez une navigation pour activer la Black Box.", footer: "Rapport gratuit pour le pilote â€” 49,90â‚¬/dossier facturÃ©s Ã  la compagnie d'assurance." },
+            'en': { title: "Black Box Insurance", subtitle: "Digital Expert Report", desc: "In case of an accident, your Black Box automatically records speed, GPS trajectory, and lean angle.<br><br>This certified report is <strong style='color:#2ecc71;'>free for you</strong>. If your insurance company requests an official certified report, they are billed <strong style='color:#f1c40f;'>â‚¬49.90 per case</strong>.", available: "Data available", pts: "GPS points recorded during the last ride.", replay: "Replay Ride", generate: "Generate PDF Report", nodata: "No ride recorded. Start navigation to activate the Black Box.", footer: "Free report for the rider â€” â‚¬49.90/case billed to the insurance company." },
+            'es': { title: "Black Box Seguro", subtitle: "Informe Pericial Digital", desc: "En caso de accidente, tu Black Box registra automÃ¡ticamente la velocidad, trayectoria GPS y Ã¡ngulo de inclinaciÃ³n.<br><br>Este informe certificado es <strong style='color:#2ecc71;'>gratuito para ti</strong>. Si tu compaÃ±Ã­a de seguros solicita un informe oficial certificado, se les factura <strong style='color:#f1c40f;'>49,90 â‚¬ por expediente</strong>.", available: "Datos disponibles", pts: "puntos GPS registrados en el Ãºltimo viaje.", replay: "Repetir Viaje", generate: "Generar Informe PDF", nodata: "NingÃºn viaje registrado. Inicia la navegaciÃ³n para activar la Black Box.", footer: "Informe gratuito para el piloto â€” 49,90 â‚¬/expediente facturados a la compaÃ±Ã­a de seguros." },
+            'it': { title: "Black Box Assicurazione", subtitle: "Rapporto Peritale Digitale", desc: "In caso di incidente, la tua Black Box registra automaticamente velocitÃ , traiettoria GPS e angolo di piega.<br><br>Questo rapporto certificato Ã¨ <strong style='color:#2ecc71;'>gratuito per te</strong>. Se la tua compagnia assicurativa richiede un rapporto certificato ufficiale, il servizio costa loro <strong style='color:#f1c40f;'>49,90 â‚¬ per pratica</strong>.", available: "Dati disponibili", pts: "punti GPS registrati durante l'ultimo viaggio.", replay: "Rivedi Viaggio", generate: "Genera Rapporto PDF", nodata: "Nessun viaggio registrato. Avvia la navigazione per attivare la Black Box.", footer: "Rapporto gratuito per il pilota â€” 49,90 â‚¬/pratica addebitati alla compagnia assicurativa." },
+            'de': { title: "Black Box Versicherung", subtitle: "Digitales Gutachten", desc: "Im Falle eines Unfalls zeichnet Ihre Black Box automatisch Geschwindigkeit, GPS-Route und Neigungswinkel auf.<br><br>Dieser zertifizierte Bericht ist <strong style='color:#2ecc71;'>fÃ¼r Sie kostenlos</strong>. Wenn Ihre Versicherung einen offiziellen zertifizierten Bericht anfordert, werden ihr <strong style='color:#f1c40f;'>49,90 â‚¬ pro Fall</strong> in Rechnung gestellt.", available: "VerfÃ¼gbare Daten", pts: "GPS-Punkte wÃ¤hrend der letzten Fahrt aufgezeichnet.", replay: "Fahrt wiederholen", generate: "PDF-Bericht erstellen", nodata: "Keine Fahrt aufgezeichnet. Starten Sie die Navigation, um die Black Box zu aktivieren.", footer: "Kostenloser Bericht fÃ¼r den Fahrer â€” 49,90 â‚¬/Fall wird der Versicherung in Rechnung gestellt." }
+        };
+        const lang = navigator.language.split('-')[0].toLowerCase();
+        const t = window.BlackBoxDict[lang] || window.BlackBoxDict['en'];
+
         const frames = JSON.parse(sessionStorage.getItem('blackbox_last_ride') || '[]');
         const hasData = frames.length > 0;
-        content.innerHTML = `<h3><i class="fa-solid fa-box-archive"></i> Black Box Assurance</h3>
+        content.innerHTML = `<h3><i class="fa-solid fa-box-archive"></i> ${t.title}</h3>
             <div style="background:rgba(52,152,219,0.05); border:1px solid #3498db; border-radius:12px; padding:15px; margin-bottom:20px;">
-                <h4 style="color:#3498db; margin-bottom:8px;"><i class="fa-solid fa-shield-halved"></i> Rapport d'Expertise NumÃ©rique</h4>
-                <p style="font-size:0.75rem; color:#aaa; line-height:1.5;">
-                    En cas d'accident, votre Black Box enregistre automatiquement la vitesse, la trajectoire GPS et l'angle d'inclinaison.<br><br>
-                    Ce rapport certifiÃ© est <strong style="color:#2ecc71;">gratuit pour vous</strong>. Si votre compagnie d'assurance demande un rapport officiel certifiÃ©, ce service leur est facturÃ© <strong style="color:#f1c40f;">49,90â‚¬ par dossier</strong>.
-                </p>
+                <h4 style="color:#3498db; margin-bottom:8px;"><i class="fa-solid fa-shield-halved"></i> ${t.subtitle}</h4>
+                <p style="font-size:0.75rem; color:#aaa; line-height:1.5;">${t.desc}</p>
             </div>
             ${hasData ? `
                 <div style="background:rgba(46,204,113,0.05); border:1px solid #2ecc71; border-radius:12px; padding:15px; margin-bottom:15px;">
-                    <strong style="color:#2ecc71;"><i class="fa-solid fa-circle-check"></i> DonnÃ©es disponibles</strong>
-                    <p style="font-size:0.75rem; color:#aaa; margin-top:5px;">${frames.length} points GPS enregistrÃ©s lors du dernier trajet.</p>
+                    <strong style="color:#2ecc71;"><i class="fa-solid fa-circle-check"></i> ${t.available}</strong>
+                    <p style="font-size:0.75rem; color:#aaa; margin-top:5px;">${frames.length} ${t.pts}</p>
                 </div>
                 <button onclick="window.BlackBoxReplay.replay()" class="btn-insurance" style="width:100%; margin-bottom:10px; background:#3498db;">
-                    <i class="fa-solid fa-play"></i> Rejouer le Trajet
+                    <i class="fa-solid fa-play"></i> ${t.replay}
                 </button>
                 <button onclick="window.BlackBoxInsurance.generateReport()" class="btn-insurance" style="width:100%; background:linear-gradient(135deg,#2ecc71,#27ae60); color:white;">
-                    <i class="fa-solid fa-file-shield"></i> GÃ©nÃ©rer le Rapport PDF
+                    <i class="fa-solid fa-file-shield"></i> ${t.generate}
                 </button>
-            ` : `<p style="text-align:center; color:#444; padding:30px;">Aucun trajet enregistrÃ©. Lancez une navigation pour activer la Black Box.</p>`}
-            <p style="font-size:0.6rem; color:#333; text-align:center; margin-top:20px;">Rapport gratuit pour le pilote â€” 49,90â‚¬/dossier facturÃ©s Ã  la compagnie d'assurance.</p>`;
+            ` : `<p style="text-align:center; color:#444; padding:30px;">${t.nodata}</p>`}
+            <p style="font-size:0.6rem; color:#333; text-align:center; margin-top:20px;">${t.footer}</p>`;
         return;
     }
     return _origShowPage.apply(this, arguments);
@@ -3692,28 +3700,37 @@ window.showPage = function(page) {
 window.BlackBoxInsurance = {
     generateReport() {
         const frames = JSON.parse(sessionStorage.getItem('blackbox_last_ride') || '[]');
-        if (!frames.length) { alert("Aucune donnÃ©e disponible."); return; }
+        if (!frames.length) { alert("Aucune donnÃ©e disponible / No data"); return; }
 
-        const date = new Date().toLocaleDateString('fr-FR');
+        const rDict = {
+            'fr': { rTitle: "=== RAPPORT BLACK BOX mon50ccetmoi ===", rDate: "Date :", rPts: "Points enregistrÃ©s :", rMaxSpd: "Vitesse maximum :", rStart: "DÃ©part GPS :", rEnd: "ArrivÃ©e GPS :", rGen: "Ce rapport est gÃ©nÃ©rÃ© par l'application mon50ccetmoi.", rContact: "Pour toute expertise assurance, contactez : contact@mon50ccetmoi.fr", rEndTxt: "=== FIN DU RAPPORT ===" },
+            'en': { rTitle: "=== mon50ccetmoi BLACK BOX REPORT ===", rDate: "Date:", rPts: "Recorded points:", rMaxSpd: "Maximum speed:", rStart: "GPS Start:", rEnd: "GPS End:", rGen: "This report is generated by the mon50ccetmoi application.", rContact: "For insurance expertise, contact: contact@mon50ccetmoi.fr", rEndTxt: "=== END OF REPORT ===" },
+            'es': { rTitle: "=== INFORME BLACK BOX mon50ccetmoi ===", rDate: "Fecha:", rPts: "Puntos registrados:", rMaxSpd: "Velocidad mÃ¡xima:", rStart: "Salida GPS:", rEnd: "Llegada GPS:", rGen: "Este informe es generado por la aplicaciÃ³n mon50ccetmoi.", rContact: "Para peritajes de seguros, contacto: contact@mon50ccetmoi.fr", rEndTxt: "=== FIN DEL INFORME ===" },
+            'it': { rTitle: "=== RAPPORTO BLACK BOX mon50ccetmoi ===", rDate: "Data:", rPts: "Punti registrati:", rMaxSpd: "VelocitÃ  massima:", rStart: "Partenza GPS:", rEnd: "Arrivo GPS:", rGen: "Questo rapporto Ã¨ generato dall'applicazione mon50ccetmoi.", rContact: "Per perizie assicurative, contattare: contact@mon50ccetmoi.fr", rEndTxt: "=== FINE DEL RAPPORTO ===" },
+            'de': { rTitle: "=== BLACK BOX BERICHT mon50ccetmoi ===", rDate: "Datum:", rPts: "Aufgezeichnete Punkte:", rMaxSpd: "HÃ¶chstgeschwindigkeit:", rStart: "GPS Start:", rEnd: "GPS Ziel:", rGen: "Dieser Bericht wurde von der App mon50ccetmoi erstellt.", rContact: "FÃ¼r Versicherungsfragen kontaktieren Sie: contact@mon50ccetmoi.fr", rEndTxt: "=== ENDE DES BERICHTS ===" }
+        };
+        const lang = navigator.language.split('-')[0].toLowerCase();
+        const t = rDict[lang] || rDict['en'];
+
+        const date = new Date().toLocaleDateString(navigator.language);
         const maxSpd = Math.max(...frames.map(f => f.spd || 0));
         const totalPts = frames.length;
         const startPos = frames[0];
         const endPos = frames[frames.length - 1];
 
-        speak("GÃ©nÃ©ration du rapport Black Box en cours.");
+        speak(lang === 'fr' ? "GÃ©nÃ©ration du rapport Black Box en cours." : "Generating Black Box report.");
 
-        // CrÃ©er un blob texte tÃ©lÃ©chargeable (simulation PDF)
         const reportText = [
-            "=== RAPPORT BLACK BOX mon50ccetmoi ===",
-            `Date : ${date}`,
-            `Points enregistrÃ©s : ${totalPts}`,
-            `Vitesse maximum : ${maxSpd} km/h`,
-            `DÃ©part GPS : ${startPos.lat.toFixed(5)}, ${startPos.lng.toFixed(5)}`,
-            `ArrivÃ©e GPS : ${endPos.lat.toFixed(5)}, ${endPos.lng.toFixed(5)}`,
+            t.rTitle,
+            `${t.rDate} ${date}`,
+            `${t.rPts} ${totalPts}`,
+            `${t.rMaxSpd} ${maxSpd} km/h`,
+            `${t.rStart} ${startPos.lat.toFixed(5)}, ${startPos.lng.toFixed(5)}`,
+            `${t.rEnd} ${endPos.lat.toFixed(5)}, ${endPos.lng.toFixed(5)}`,
             "",
-            "Ce rapport est gÃ©nÃ©rÃ© par l'application mon50ccetmoi.",
-            "Pour toute expertise assurance, contactez : contact@mon50ccetmoi.fr",
-            "=== FIN DU RAPPORT ==="
+            t.rGen,
+            t.rContact,
+            t.rEndTxt
         ].join('\n');
 
         const blob = new Blob([reportText], { type: 'text/plain' });
@@ -3725,5 +3742,7 @@ window.BlackBoxInsurance = {
         URL.revokeObjectURL(url);
     }
 };
+
+
 
 
