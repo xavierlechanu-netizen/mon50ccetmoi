@@ -3712,7 +3712,7 @@ window.showPage = function(page) {
                     <div style="font-family:monospace; font-size:1.2rem; color:var(--neon-blue); margin:5px 0;">BB-#{Math.floor(Math.random()*900000 + 100000)}</div>
                     <p style="font-size:0.65rem; color:#666;">Donnez ce code à votre assureur pour qu'il puisse accéder à vos données certifiées sur le portail pro.</p>
                 </div>
-                <button onclick="alert('L\'assureur a maintenant accès à votre dossier de litige via votre code.')" class="btn-insurance" style="width:100%; margin-top:10px; background:linear-gradient(135deg,#34495e,#2c3e50); color:white; border:1px solid #555;">
+                <button onclick="window.DisputeAutomation.initiateDispute()" class="btn-insurance" style="width:100%; margin-top:10px; background:linear-gradient(135deg,#34495e,#2c3e50); color:white; border:1px solid #555;">
                     <i class="fa-solid fa-gavel"></i> Activer uniquement pour litige
                 </button>
             ` : `<p style="text-align:center; color:#444; padding:30px;">${t.nodata}</p>`}
@@ -3800,3 +3800,31 @@ window.BlackBoxInsurance = {
 
 
 
+// ============================================================
+// AUTOMATISATION DES LITIGES ET PAIEMENTS B2B
+// ============================================================
+window.DisputeAutomation = {
+    initiateDispute() {
+        const caseId = "CASE-" + Math.random().toString(36).substr(2, 9).toUpperCase();
+        const pilotCode = "BB-" + Math.floor(Math.random()*900000 + 100000);
+        
+        console.log(`[Dispute] Analyse du dossier ${caseId} en cours...`);
+        
+        const secureLink = `https://expertise.mon50ccetmoi.fr/claim/${caseId}`;
+        const shareText = `Litige mon50ccetmoi : Voici mon dossier d'expertise certifiée Black Box. Code déverrouillage : ${pilotCode}. Lien d'achat : ${secureLink}`;
+        
+        if (navigator.share) {
+            navigator.share({
+                title: 'Dossier Litige mon50ccetmoi',
+                text: shareText,
+                url: secureLink
+            }).catch(() => {
+                prompt("Copiez ce message pour votre assureur :", shareText);
+            });
+        } else {
+            prompt("Copiez ce message pour votre assureur :", shareText);
+        }
+        
+        return { caseId, pilotCode, secureLink };
+    }
+};
