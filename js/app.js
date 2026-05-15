@@ -3720,6 +3720,11 @@ window.BlackBoxInsurance = {
 
         speak(lang === 'fr' ? "GÃ©nÃ©ration du rapport Black Box en cours." : "Generating Black Box report.");
 
+                // Calculs ecologiques et mecaniques
+        const distKm = window.session?.lastRouteDist || (totalPts * 0.01); // fallback estimation
+        const estFuel = (distKm * 3.5 / 100).toFixed(2);
+        const estWear = (distKm / 80).toFixed(2); // % d'usure sur ce trajet
+
         const reportText = [
             t.rTitle,
             `${t.rDate} ${date}`,
@@ -3727,6 +3732,11 @@ window.BlackBoxInsurance = {
             `${t.rMaxSpd} ${maxSpd} km/h`,
             `${t.rStart} ${startPos.lat.toFixed(5)}, ${startPos.lng.toFixed(5)}`,
             `${t.rEnd} ${endPos.lat.toFixed(5)}, ${endPos.lng.toFixed(5)}`,
+            "",
+            "--- ECO-TELEMETRIE ---",
+            `Distance estimee : ${distKm} km`,
+            `Consommation estimee : ${estFuel} L`,
+            `Usure pneus estimee : ${estWear} %`,
             "",
             t.rGen,
             t.rContact,
@@ -3742,6 +3752,7 @@ window.BlackBoxInsurance = {
         URL.revokeObjectURL(url);
     }
 };
+
 
 
 
