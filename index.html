@@ -332,9 +332,25 @@
                 <i class="fa-regular fa-paper-plane"></i>
                 <span>NAV</span>
             </button>
-            <button class="t-nav-btn" onclick="document.getElementById('secure-vault-screen').classList.remove('hidden'); document.getElementById('search-container').classList.add('hidden');">
-                <i class="fa-solid fa-car-side"></i>
-                <span>VEHICLE</span>
+            <button class="t-nav-btn" onclick="window.KartingMode.toggle()">
+                <i class="fa-solid fa-flag-checkered"></i>
+                <span>KARTING</span>
+            </button>
+            <button class="t-nav-btn" id="btn-weather-radar" onclick="window.WeatherRadar.toggle()">
+                <i class="fa-solid fa-cloud-showers-heavy"></i>
+                <span>RADAR</span>
+            </button>
+            <button class="t-nav-btn" onclick="window.HeatMap.toggle()">
+                <i class="fa-solid fa-fire"></i>
+                <span>HEATMAP</span>
+            </button>
+            <button class="t-nav-btn" onclick="showPage('seasons')">
+                <i class="fa-solid fa-trophy"></i>
+                <span>SAISON</span>
+            </button>
+            <button class="t-nav-btn" style="color:#ff4d4d;" onmousedown="window.SOSEmergency.startHold()" onmouseup="window.SOSEmergency.cancelHold()" ontouchstart="window.SOSEmergency.startHold()" ontouchend="window.SOSEmergency.cancelHold()">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <span>SOS</span>
             </button>
             <button id="btn-ptt" class="t-nav-btn" onmousedown="Intercom.startTalking()" onmouseup="Intercom.stopTalking()" ontouchstart="Intercom.startTalking()" ontouchend="Intercom.stopTalking()" onclick="if(event.detail === 1) Intercom.toggleChannel()">
                 <i class="fa-solid fa-music"></i>

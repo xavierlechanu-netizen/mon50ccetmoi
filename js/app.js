@@ -1,4 +1,4 @@
-// --- CORE NAVIGATION (SAFE ZONE) ---
+﻿// --- CORE NAVIGATION (SAFE ZONE) ---
 window.toggleMenu = function() {
     try {
         const sidebar = document.getElementById('sidebar');
@@ -2312,8 +2312,6 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log("DOM Prêt. En attente du SDK Maps...");
 });
 
-// Duplicate toggleMenu removed to avoid conflicts with global implementation at line 2.
-
 window.closeScreen = function() {
     document.getElementById('screen-overlay').classList.add('hidden');
 }
@@ -2338,6 +2336,33 @@ window.showPage = function(page) {
             <button onclick="generateRideCard()" class="btn-insurance" style="width:100%; margin-top:20px; background:linear-gradient(45deg, #ffb703, #ff4d4d); color:black;">
                 <i class="fa-solid fa-share-nodes"></i> GÉNÉRER MA CARTE RIDE (VIRAL)
             </button>`;
+    } else if(page === 'seasons') {
+        content.innerHTML = `<h3><i class="fa-solid fa-trophy"></i> Saisons de Pilote</h3>
+            <p style="font-size:0.75rem; color:#aaa; margin-bottom:15px;">Defis communautaires gratuits. Progressez chaque mois avec la communaute 50cc !</p>` +
+            window.PilotSeasons.getHTMLSummary() +
+            `<div style="margin-top:20px; padding:15px; background:rgba(255,255,255,0.03); border-radius:12px; border:1px solid #333;">` +
+            `<h4 style="color:var(--accent); font-size:0.85rem; margin-bottom:10px;"><i class="fa-solid fa-gauge-high"></i> KILOMETRAGE PREDICTIF</h4>` +
+            window.MecaPredictor.getHTMLSummary() +
+            `</div>
+            <button onclick="window.SchoolZoneAI.enable()" class="btn-insurance" style="width:100%; margin-top:15px; background:linear-gradient(135deg,#e74c3c,#c0392b);">
+                <i class="fa-solid fa-school"></i> Activer Detecteur Zones Scolaires
+            </button>`;
+    } else if(page === 'community_roadbooks') {
+        const sharedRoadbooks = JSON.parse(localStorage.getItem('community_roadbooks') || '[]');
+        content.innerHTML = `<h3><i class="fa-solid fa-map-location-dot"></i> Roadbooks Communautaires</h3>
+            <p style="font-size:0.75rem; color:#aaa; margin-bottom:15px;">Partagez gratuitement vos itineraires favoris avec tous les pilotes 50cc !</p>
+            <button onclick="window.CommunityRoadbooks.shareMyRoute()" class="btn-insurance" style="width:100%; margin-bottom:20px; background:linear-gradient(135deg,var(--neon-blue),#0077b6);">
+                <i class="fa-solid fa-share-nodes"></i> Partager mon itineraire actuel (Gratuit)
+            </button>
+            <h4 style="font-size:0.85rem; color:#aaa; margin-bottom:10px;">Itineraires de la communaute</h4>
+            <div id="community-roadbooks-list">
+                ${sharedRoadbooks.length ? sharedRoadbooks.map(rb => `<div class="card" style="border-left:4px solid var(--neon-blue);">
+                    <strong>${rb.name}</strong> <span style="font-size:0.65rem;color:#aaa;">${rb.distance}km - ${rb.author}</span>
+                    <p style="font-size:0.75rem;margin:5px 0;color:#ccc;">${rb.description || "Itineraire 50cc"}</p>
+                    <button onclick="window.CommunityRoadbooks.load(rb.id)" style="background:var(--neon-blue);color:#000;border:none;border-radius:8px;padding:4px 10px;font-size:0.7rem;cursor:pointer;">CHARGER</button>
+                </div>`).join("") : "<p style='text-align:center;color:#444;padding:30px;'>Soyez le premier a partager !</p>"}
+            </div>`;
+
     } else if(page === 'garage') {
         const history = JSON.parse(secureGetItem('maint_history') || '[]');
         const ctDate = secureGetItem('ct_date') || 'Non défini';
@@ -3448,23 +3473,6 @@ window.triggerCommunitySonar = function() {
 };
 setInterval(window.triggerCommunitySonar, 120000); // Sonar toutes les 2 minutes
 
-// --- 4. GARAGE VIRTUEL (TUNING) ---
-window.updateVirtualTuning = function() {
-    const galets = parseFloat(document.getElementById('tune-galets').value);
-    const gicleur = parseInt(document.getElementById('tune-gicleur').value);
-    
-    // Calcul simplifié (purement ludique/théorique pour un 50cc)
-    // Galets légers (3-5g) = Accel, Lourds (6-8g) = Vmax
-    // Gicleur gros (>70) = Vmax mais engorge si trop gros
-    
-    let accelScore = 10 - ((galets - 3) * 1.5); // de 10 (3g) à ~2.5 (8g)
-    let vmaxScore = 2 + ((galets - 3) * 1.5); // de 2 (3g) à ~9.5 (8g)
-    
-    // Bonus gicleur
-    if (gicleur > 60 && gicleur <= 80) vmaxScore += 1;
-    if (gicleur > 80) { accelScore -= 2; vmaxScore -= 1; } // Engorgement
-    
-    accelScore = Math.max(1, Math.min(10, Math.round(accelScore)));
     vmaxScore = Math.max(1, Math.min(10, Math.round(vmaxScore)));
     
     document.getElementById('tune-accel').innerText = accelScore + '/10';
@@ -3502,5 +3510,225 @@ window.generateTacticalExploration = function() {
             startRouteCalculation("current", destLatLngStr);
         }, 1500);
     });
+};
+
+
+
+
+// ============================================================
+// F10 : ROADBOOKS COMMUNAUTAIRES (100% GRATUIT)
+// ============================================================
+window.CommunityRoadbooks = {
+    shareMyRoute() {
+        if (!window.currentRoute && !window.currentPosition) {
+            alert("Lancez d'abord un itinÃ©raire pour pouvoir le partager !");
+            return;
+        }
+        const name = prompt("Donnez un nom Ã  votre itinÃ©raire (ex: Boucle des Alpilles) :");
+        if (!name) return;
+        const desc = prompt("Description courte (optionnel) :") || "";
+
+        const existing = JSON.parse(localStorage.getItem('community_roadbooks') || '[]');
+        const newRb = {
+            id: 'rb_' + Date.now(),
+            name: name.trim(),
+            description: desc.trim(),
+            author: window.session?.username || 'Pilote Anonyme',
+            distance: window.session?.lastRouteDist || '?',
+            date: new Date().toLocaleDateString('fr-FR'),
+            rating: 0,
+            ratingCount: 0
+        };
+        existing.unshift(newRb);
+        // Garder max 50 roadbooks locaux
+        if (existing.length > 50) existing.pop();
+        localStorage.setItem('community_roadbooks', JSON.stringify(existing));
+        speak("ItinÃ©raire partagÃ© avec la communautÃ©. Merci pour votre contribution !");
+        showPage('community_roadbooks');
+    },
+
+    load(id) {
+        const rbs = JSON.parse(localStorage.getItem('community_roadbooks') || '[]');
+        const rb = rbs.find(r => r.id === id);
+        if (!rb) return;
+        speak("Chargement de l'itinÃ©raire " + rb.name);
+        // On met le nom dans la barre de recherche pour relancer
+        if (document.getElementById('route-search')) {
+            document.getElementById('route-search').value = rb.name;
+        }
+        document.getElementById('screen-overlay')?.classList.add('hidden');
+    },
+
+    rate(id) {
+        const rbs = JSON.parse(localStorage.getItem('community_roadbooks') || '[]');
+        const rb = rbs.find(r => r.id === id);
+        if (!rb) return;
+        rb.rating = Math.min(5, (rb.rating || 0) + 1);
+        rb.ratingCount = (rb.ratingCount || 0) + 1;
+        localStorage.setItem('community_roadbooks', JSON.stringify(rbs));
+        speak("Merci pour votre note !");
+        showPage('community_roadbooks');
+    }
+};
+
+
+// ============================================================
+// F11 : MÃ‰CANO Ã€ LA DEMANDE (Garages Partenaires CertifiÃ©s)
+// ModÃ¨le : Frais d'entrÃ©e unique 49,90â‚¬ pour le garage
+// L'accÃ¨s pilote est entiÃ¨rement GRATUIT
+// ============================================================
+window.MecanoDemande = {
+    // Garages certifiÃ©s (frais d'entrÃ©e unique 49,90â‚¬ pour Ãªtre rÃ©fÃ©rencÃ©)
+    // En production, ces donnÃ©es viendront de Firebase
+    _getCertifiedGarages() {
+        return JSON.parse(localStorage.getItem('certified_garages') || '[]');
+    },
+
+    async findNearby() {
+        if (!window.currentPosition) {
+            speak("GPS requis pour trouver les garages.");
+            return [];
+        }
+        const { lat, lng } = window.currentPosition;
+        const garages = this._getCertifiedGarages();
+
+        // Filtrage : uniquement les certifiÃ©s avec statut disponible
+        const nearby = garages.filter(g => {
+            const dist = window.haversineDistance
+                ? window.haversineDistance(lat, lng, g.lat, g.lng)
+                : 999;
+            return dist < 15; // Dans un rayon de 15km
+        });
+
+        return nearby;
+    },
+
+    getHTMLPanel() {
+        const garages = this._getCertifiedGarages();
+        if (!garages.length) {
+            return `<div style="text-align:center; padding:30px; color:#444;">
+                <i class="fa-solid fa-wrench" style="font-size:2rem; margin-bottom:10px; display:block;"></i>
+                <p style="font-size:0.85rem;">Aucun garage partenaire dans votre secteur pour le moment.</p>
+                <p style="font-size:0.7rem; color:#333; margin-top:10px;">Vous Ãªtes garagiste ? Rejoignez notre rÃ©seau.</p>
+                <a href="mailto:contact@mon50ccetmoi.fr?subject=Rejoindre le rÃ©seau partenaire" 
+                   style="display:inline-block; margin-top:10px; padding:8px 15px; background:var(--accent); color:#000; border-radius:10px; font-size:0.75rem; text-decoration:none; font-weight:bold;">
+                   âœ‰ï¸ Nous contacter
+                </a>
+            </div>`;
+        }
+
+        return garages.map(g => `
+            <div class="card" style="border-left:4px solid #f1c40f; margin-bottom:10px;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <strong style="color:#f1c40f;">${g.name}</strong>
+                        <div style="font-size:0.65rem; color:#aaa; margin-top:2px;">${g.address}</div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div style="font-size:0.65rem; font-weight:bold; color:${g.status === 'dispo' ? '#2ecc71' : g.status === 'busy' ? '#f1c40f' : '#ff4d4d'};">
+                            ${g.status === 'dispo' ? 'âœ… Dispo' : g.status === 'busy' ? 'â³ Sur RDV' : 'ðŸš« Complet'}
+                        </div>
+                        <div style="font-size:0.6rem; color:#555; margin-top:2px;">â˜… CERTIFIÃ‰</div>
+                    </div>
+                </div>
+                <div style="display:flex; gap:8px; margin-top:10px;">
+                    <a href="tel:${g.phone}" style="flex:1; text-align:center; background:#2ecc71; color:#000; border-radius:8px; padding:6px; font-size:0.75rem; text-decoration:none; font-weight:bold;">
+                        <i class="fa-solid fa-phone"></i> Appeler
+                    </a>
+                    <button onclick="window.setRoute('${g.address}')" style="flex:1; background:var(--neon-blue); color:#000; border:none; border-radius:8px; padding:6px; font-size:0.75rem; cursor:pointer; font-weight:bold;">
+                        <i class="fa-solid fa-route"></i> Y Aller
+                    </button>
+                </div>
+            </div>`).join('');
+    }
+};
+
+// Ajout de la page mÃ©cano dans showPage (hook)
+const _origShowPage = window.showPage;
+window.showPage = function(page) {
+    if (page === 'mecano_demande') {
+        const overlay = document.getElementById('screen-overlay');
+        const content = document.getElementById('screen-content');
+        if (!overlay || !content) return;
+        overlay.classList.remove('hidden');
+        content.innerHTML = `<h3><i class="fa-solid fa-wrench"></i> MÃ©cano Ã  la Demande</h3>
+            <p style="font-size:0.75rem; color:#aaa; margin-bottom:5px;">Garages certifiÃ©s partenaires â€” accÃ¨s gratuit pour les pilotes.</p>
+            <div style="font-size:0.6rem; color:#555; background:rgba(255,183,3,0.05); border:1px solid #333; border-radius:8px; padding:8px; margin-bottom:15px;">
+                <i class="fa-solid fa-certificate" style="color:#f1c40f;"></i> Tous les garages affichÃ©s ont rejoint le rÃ©seau <strong>mon50ccetmoi</strong>.
+            </div>
+            ${window.MecanoDemande.getHTMLPanel()}`;
+        return;
+    }
+    if (page === 'blackbox_insurance') {
+        const overlay = document.getElementById('screen-overlay');
+        const content = document.getElementById('screen-content');
+        if (!overlay || !content) return;
+        overlay.classList.remove('hidden');
+        const frames = JSON.parse(sessionStorage.getItem('blackbox_last_ride') || '[]');
+        const hasData = frames.length > 0;
+        content.innerHTML = `<h3><i class="fa-solid fa-box-archive"></i> Black Box Assurance</h3>
+            <div style="background:rgba(52,152,219,0.05); border:1px solid #3498db; border-radius:12px; padding:15px; margin-bottom:20px;">
+                <h4 style="color:#3498db; margin-bottom:8px;"><i class="fa-solid fa-shield-halved"></i> Rapport d'Expertise NumÃ©rique</h4>
+                <p style="font-size:0.75rem; color:#aaa; line-height:1.5;">
+                    En cas d'accident, votre Black Box enregistre automatiquement la vitesse, la trajectoire GPS et l'angle d'inclinaison.<br><br>
+                    Ce rapport certifiÃ© est <strong style="color:#2ecc71;">gratuit pour vous</strong>. Si votre compagnie d'assurance demande un rapport officiel certifiÃ©, ce service leur est facturÃ© <strong style="color:#f1c40f;">49,90â‚¬ par dossier</strong>.
+                </p>
+            </div>
+            ${hasData ? `
+                <div style="background:rgba(46,204,113,0.05); border:1px solid #2ecc71; border-radius:12px; padding:15px; margin-bottom:15px;">
+                    <strong style="color:#2ecc71;"><i class="fa-solid fa-circle-check"></i> DonnÃ©es disponibles</strong>
+                    <p style="font-size:0.75rem; color:#aaa; margin-top:5px;">${frames.length} points GPS enregistrÃ©s lors du dernier trajet.</p>
+                </div>
+                <button onclick="window.BlackBoxReplay.replay()" class="btn-insurance" style="width:100%; margin-bottom:10px; background:#3498db;">
+                    <i class="fa-solid fa-play"></i> Rejouer le Trajet
+                </button>
+                <button onclick="window.BlackBoxInsurance.generateReport()" class="btn-insurance" style="width:100%; background:linear-gradient(135deg,#2ecc71,#27ae60); color:white;">
+                    <i class="fa-solid fa-file-shield"></i> GÃ©nÃ©rer le Rapport PDF
+                </button>
+            ` : `<p style="text-align:center; color:#444; padding:30px;">Aucun trajet enregistrÃ©. Lancez une navigation pour activer la Black Box.</p>`}
+            <p style="font-size:0.6rem; color:#333; text-align:center; margin-top:20px;">Rapport gratuit pour le pilote â€” 49,90â‚¬/dossier facturÃ©s Ã  la compagnie d'assurance.</p>`;
+        return;
+    }
+    return _origShowPage.apply(this, arguments);
+};
+
+// ============================================================
+// BLACK BOX INSURANCE : Rapport PDF (simulation)
+// ============================================================
+window.BlackBoxInsurance = {
+    generateReport() {
+        const frames = JSON.parse(sessionStorage.getItem('blackbox_last_ride') || '[]');
+        if (!frames.length) { alert("Aucune donnÃ©e disponible."); return; }
+
+        const date = new Date().toLocaleDateString('fr-FR');
+        const maxSpd = Math.max(...frames.map(f => f.spd || 0));
+        const totalPts = frames.length;
+        const startPos = frames[0];
+        const endPos = frames[frames.length - 1];
+
+        speak("GÃ©nÃ©ration du rapport Black Box en cours.");
+
+        // CrÃ©er un blob texte tÃ©lÃ©chargeable (simulation PDF)
+        const reportText = [
+            "=== RAPPORT BLACK BOX mon50ccetmoi ===",
+            `Date : ${date}`,
+            `Points enregistrÃ©s : ${totalPts}`,
+            `Vitesse maximum : ${maxSpd} km/h`,
+            `DÃ©part GPS : ${startPos.lat.toFixed(5)}, ${startPos.lng.toFixed(5)}`,
+            `ArrivÃ©e GPS : ${endPos.lat.toFixed(5)}, ${endPos.lng.toFixed(5)}`,
+            "",
+            "Ce rapport est gÃ©nÃ©rÃ© par l'application mon50ccetmoi.",
+            "Pour toute expertise assurance, contactez : contact@mon50ccetmoi.fr",
+            "=== FIN DU RAPPORT ==="
+        ].join('\n');
+
+        const blob = new Blob([reportText], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `blackbox_rapport_${date.replace(/\//g, '-')}.txt`;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
 };
 
