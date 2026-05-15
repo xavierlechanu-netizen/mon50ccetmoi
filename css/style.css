@@ -1,4 +1,4 @@
-:root {
+﻿:root {
     --neon-blue: #00f2ff;
     --neon-gold: #ffb700;
     --neon-red: #ff0055;
@@ -117,6 +117,16 @@ body, html {
 
 /* --- PREMIUM LOADER SYSTEM --- */
 #app-loader {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: #000;
+    background-image: 
+        radial-gradient(circle at 50% 50%, rgba(204, 160, 0, 0.15) 0%, transparent 70%),
+        radial-gradient(circle at 20% 30%, rgba(0, 210, 255, 0.05) 0%, transparent 50%);
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    z-index: 20000;
+    transition: opacity 1.2s cubic-bezier(0.4, 0, 0.2, 1), visibility 1.2s;
+    overflow: hidden;
     position: fixed;
     top: 0; left: 0; width: 100%; height: 100%;
     background: radial-gradient(circle at center, #1a1a1a 0%, #000 100%);
@@ -320,6 +330,17 @@ body, html {
 }
 
 .loader-title {
+    font-size: 2.5rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 8px;
+    background: linear-gradient(180deg, #fff, #ccc);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    margin-top: 20px;
+    text-shadow: 0 0 30px rgba(255,255,255,0.3);
+    animation: title-glow 4s infinite alternate;
     color: white;
     font-size: 1.4rem;
     letter-spacing: 4px;
@@ -574,7 +595,7 @@ body, html {
 }
 
 /* Radar Sweep Animation */
-.radar-sweep {
+.radar-sweep { display: none; opacity: 0; 
     position: fixed;
     top: 50%; left: 50%;
     width: 200vw; height: 200vw;
@@ -768,7 +789,7 @@ body, html {
 }
 
 /* Radar Sweep Animation */
-.radar-sweep {
+.radar-sweep { display: none; opacity: 0; 
     position: fixed;
     top: 50%; left: 50%;
     width: 200vw; height: 200vw;
@@ -2576,6 +2597,11 @@ body, html {
 
 /* BOTTOM NAV BAR */
 .tactical-nav-bar {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 10001 !important;
     display: flex;
     justify-content: space-around;
     align-items: center;
@@ -2778,6 +2804,11 @@ body, html {
 
 /* NAV BAR REWRITE */
 .tactical-nav-bar {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 10001 !important;
     display: flex;
     justify-content: space-around;
     align-items: center;
@@ -3244,3 +3275,10 @@ body.shadow-mode .tactical-speed-val {
     80% { opacity: 1; }
     100% { opacity: 0; }
 }
+
+
+@keyframes title-glow {
+    0% { filter: drop-shadow(0 0 2px rgba(255,255,255,0.2)); letter-spacing: 8px; }
+    100% { filter: drop-shadow(0 0 15px rgba(204,160,0,0.5)); letter-spacing: 12px; }
+}
+

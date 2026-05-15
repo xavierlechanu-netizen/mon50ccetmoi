@@ -2304,7 +2304,7 @@ setTimeout(() => {
     if(loader && loader.style.visibility !== 'hidden') {
         console.warn("Fail-safe: Force hiding loader after timeout.");
         loader.style.opacity = '0';
-        setTimeout(() => loader.style.visibility = 'hidden', 800);
+        setTimeout(() => loader.style.visibility = 'hidden', 1500);
     }
 }, 5000);
 
@@ -2313,10 +2313,14 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 window.closeScreen = function() {
+    const hud = document.getElementById('hud');
+    if(hud) hud.style.display = 'block';
     document.getElementById('screen-overlay').classList.add('hidden');
 }
 
 window.showPage = function(page) {
+    const hud = document.getElementById('hud');
+    if(hud) hud.style.display = 'none';
     const overlay = document.getElementById('screen-overlay');
     const content = document.getElementById('screen-content');
     overlay.classList.remove('hidden');
@@ -3640,6 +3644,8 @@ window.MecanoDemande = {
 // Ajout de la page mÃ©cano dans showPage (hook)
 const _origShowPage = window.showPage;
 window.showPage = function(page) {
+    const hud = document.getElementById('hud');
+    if(hud) hud.style.display = 'none';
     if (page === 'mecano_demande') {
         const overlay = document.getElementById('screen-overlay');
         const content = document.getElementById('screen-content');
@@ -3859,5 +3865,24 @@ window.DisputeAutomation = {
         return { caseId, pilotCode, secureLink };
     }
 };
+
+
+
+
+window.showVault = function() {
+    document.getElementById('secure-vault-screen').classList.remove('hidden');
+    const searchContainer = document.getElementById('search-container');
+    const hud = document.getElementById('hud');
+    if(searchContainer) searchContainer.classList.add('hidden');
+    if(hud) hud.style.display = 'none';
+}
+
+window.hideVault = function() {
+    document.getElementById('secure-vault-screen').classList.add('hidden');
+    const searchContainer = document.getElementById('search-container');
+    const hud = document.getElementById('hud');
+    if(searchContainer) searchContainer.classList.remove('hidden');
+    if(hud) hud.style.display = 'block';
+}
 
 

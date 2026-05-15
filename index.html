@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="fr-FR" dir="ltr">
 <head>
     <script>
@@ -328,7 +328,7 @@
 
         <!-- BOTTOM NAV BAR -->
         <div class="tactical-nav-bar">
-            <button class="t-nav-btn active" onclick="document.getElementById('secure-vault-screen').classList.add('hidden'); document.getElementById('search-container').classList.remove('hidden');">
+            <button class="t-nav-btn active" onclick="window.hideVault()">
                 <i class="fa-regular fa-paper-plane"></i>
                 <span>NAV</span>
             </button>
@@ -344,10 +344,7 @@
                 <i class="fa-solid fa-fire"></i>
                 <span>HEATMAP</span>
             </button>
-            <button class="t-nav-btn" onclick="showPage('seasons')">
-                <i class="fa-solid fa-trophy"></i>
-                <span>SAISON</span>
-            </button>
+            
             <button class="t-nav-btn" style="color:#ff4d4d;" onmousedown="window.SOSEmergency.startHold()" onmouseup="window.SOSEmergency.cancelHold()" ontouchstart="window.SOSEmergency.startHold()" ontouchend="window.SOSEmergency.cancelHold()">
                 <i class="fa-solid fa-triangle-exclamation"></i>
                 <span>SOS</span>
@@ -356,7 +353,7 @@
                 <i class="fa-solid fa-music"></i>
                 <span>AUDIO</span>
             </button>
-            <button class="t-nav-btn" onclick="document.getElementById('secure-vault-screen').classList.remove('hidden'); document.getElementById('search-container').classList.add('hidden');">
+            <button class="t-nav-btn" onclick="window.showVault()">
                 <i class="fa-solid fa-gear"></i>
                 <span>SETTINGS</span>
             </button>
@@ -819,15 +816,13 @@
             </div>
         </div>
 
-        <!-- Vault Bottom Nav -->
-        <div style="position:fixed; bottom:0; left:0; width:100%; display:flex; justify-content:space-around; padding:15px 0 calc(15px + env(safe-area-inset-bottom, 0px)); background:#0a0a0a; border-top:1px solid #222; box-shadow: 0 -10px 30px rgba(0,0,0,0.8); z-index:10002;">
-            <div style="text-align:center; color:#666;"><i class="fa-solid fa-house" style="font-size:1.2rem; margin-bottom:5px; display:block;"></i><span style="font-size:0.7rem;">Home</span></div>
+        
             <div style="text-align:center; color:#ffd700;"><i class="fa-solid fa-file-lines" style="font-size:1.2rem; margin-bottom:5px; display:block;"></i><span style="font-size:0.7rem;">Documents</span></div>
             <div style="text-align:center; color:#666;"><i class="fa-solid fa-clock-rotate-left" style="font-size:1.2rem; margin-bottom:5px; display:block;"></i><span style="font-size:0.7rem;">Activities</span></div>
             <div style="text-align:center; color:#666;"><i class="fa-solid fa-award" style="font-size:1.2rem; margin-bottom:5px; display:block;"></i><span style="font-size:0.7rem;">Badges</span></div>
             <div style="text-align:center; color:#666;"><i class="fa-regular fa-user" style="font-size:1.2rem; margin-bottom:5px; display:block;"></i><span style="font-size:0.7rem;">Profile</span></div>
         </div>
-        <button onclick="document.getElementById('secure-vault-screen').classList.add('hidden')" style="position:fixed; top:20px; left:20px; background:rgba(0,0,0,0.5); border:1px solid #ffd700; color:#ffd700; width:40px; height:40px; border-radius:50%; z-index:10001;"><i class="fa-solid fa-arrow-left"></i></button>
+        <button onclick="window.hideVault()" style="position:fixed; top:20px; left:20px; background:rgba(0,0,0,0.5); border:1px solid #ffd700; color:#ffd700; width:40px; height:40px; border-radius:50%; z-index:10001;"><i class="fa-solid fa-arrow-left"></i></button>
     </div>
 
     <!-- COMMUNITY RADAR SCREEN -->
@@ -919,4 +914,6 @@
     </div>
 </body>
 </html>
+
+
 
