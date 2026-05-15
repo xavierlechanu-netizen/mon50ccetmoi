@@ -1,0 +1,22 @@
+@echo off
+set JAVA_HOME=C:\Users\xavie\.bubblewrap\jdk\jdk-17.0.11+9
+set ANDROID_HOME=C:\Users\xavie\AppData\Local\Android\Sdk
+set PATH=%JAVA_HOME%\bin;%PATH%
+set BUBBLEWRAP_KEYSTORE_PASSWORD=Mon50cc-2026!
+set BUBBLEWRAP_KEY_PASSWORD=Mon50cc-2026!
+set GRADLE_OPTS=-Xmx384m -XX:MaxMetaspaceSize=128m
+
+echo [INFO] Demarrage de la compilation v50.1.10...
+cmd /c bubblewrap build --debug
+if %ERRORLEVEL% NEQ 0 (
+    echo [ERROR] La compilation a echoue.
+    exit /b %ERRORLEVEL%
+)
+
+echo [INFO] Publication sur Play Console...
+cmd /c bubblewrap play publish --aabPath ./app-release-bundle.aab
+if %ERRORLEVEL% EQU 0 (
+    echo [SUCCESS] Publication terminee !
+) else (
+    echo [ERROR] La publication a echoue.
+)

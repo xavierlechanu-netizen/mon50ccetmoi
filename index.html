@@ -283,6 +283,17 @@
                 </div>
             </div>
 
+            <!-- EXPLORATION ALÉATOIRE -->
+            <button id="btn-exploration" onclick="generateTacticalExploration()" style="background: rgba(0, 242, 255, 0.1); color: var(--neon-blue); border: 1px solid var(--neon-blue); border-radius: 12px; height: 44px; padding: 0 15px; font-weight: bold; cursor: pointer; transition: all 0.3s; flex-shrink: 0;" onmouseover="this.style.background='var(--neon-blue)'; this.style.color='#000'" onmouseout="this.style.background='rgba(0, 242, 255, 0.1)'; this.style.color='var(--neon-blue)'">
+                <i class="fa-solid fa-dice"></i> EXPLORER
+            </button>
+
+            <!-- SHADOW MODE -->
+            <button id="btn-shadow-toggle" onclick="toggleShadowMode()" style="background: rgba(5, 10, 20, 0.7); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.05); color: #666; border-radius: 16px; padding: 8px 15px; display: flex; align-items: center; gap: 10px; cursor: pointer; flex-shrink: 0; transition: all 0.3s;">
+                <i class="fa-solid fa-eye-slash" style="font-size: 1.2rem;"></i>
+                <div style="font-size: 0.65rem; text-align: left; text-transform: uppercase; font-weight: bold; letter-spacing: 1px;">Shadow<br><span>OFF</span></div>
+            </button>
+
             <!-- SENTINEL -->
             <div id="btn-guardian-toggle" class="tactical-sentinel-badge active" onclick="toggleGuardianAngel()" style="flex-shrink: 0; background: rgba(5, 10, 20, 0.7); backdrop-filter: blur(15px); border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); padding: 8px 15px; display: flex; align-items: center; gap: 10px; cursor: pointer; transition: all 0.3s ease;">
                 <i class="fa-solid fa-shield-halved" style="font-size: 1.5rem; color: #2ecc71; filter: drop-shadow(0 0 5px rgba(46,204,113,0.5));"></i>
@@ -304,7 +315,7 @@
                 </div>
                 <div class="stat-group center-align">
                     <div>BATTERY: <span>100%</span></div>
-                    <div>STATUS: <span style="color:#00ffff;">OPTIMAL</span></div>
+                    <div>GRIP: <span id="grip-hud" style="color:#00ffff;">100%</span></div>
                 </div>
                 <div class="stat-group right-align">
                     <div>DIST: <span id="nav-dist">-- km</span></div>

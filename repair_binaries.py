@@ -8,21 +8,26 @@ def repair_file(path):
     with open(path, 'rb') as f:
         data = f.read()
     
-    # Check if we have 0D 0A sequences
     if b'\r\n' in data:
         print(f"Found CRLF in {path}, attempting repair...")
         new_data = data.replace(b'\r\n', b'\n')
-        with open(path + '.repaired', 'wb') as f:
+        with open(path, 'wb') as f:
             f.write(new_data)
-        print(f"Repaired file saved to {path}.repaired")
+        print(f"Repaired {path}")
     else:
-        print(f"No CRLF found in {path}")
+        # print(f"No CRLF in {path}")
+        pass
 
-files_to_check = [
-    'upload-keystore.jks',
-    'android/latest_download/signing.keystore',
-    'app-release-bundle.aab'
-]
+def scan_and_repair(directory):
+    for root, dirs, files in os.walk(directory):
+        for file in files:
+            ext = file.lower()
+            if ext.endswith(('.png', '.jpg', '.jpeg', '.aab', '.jks', '.keystore')):
+                repair_file(os.path.join(root, file))
 
-for f in files_to_check:
-    repair_file(f)
+repair_file('tools/bundletool.jar')
+repair_file('upload-keystore.jks')
+repair_file('app-release-bundle.aab.bak')
+
+# Scan assets
+scan_and_repair('assets')

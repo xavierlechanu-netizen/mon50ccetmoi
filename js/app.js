@@ -3366,3 +3366,138 @@ window.getLocalizedRouteMsg = function(dist, etaText, isRodage) {
     }
 };
 
+// --- 1. SHADOW MODE ---
+window.toggleShadowMode = function() {
+    const isShadow = document.body.classList.toggle('shadow-mode');
+    const badge = document.getElementById('btn-shadow-toggle');
+    if (badge) {
+        badge.innerHTML = isShadow 
+            ? '<i class="fa-solid fa-eye-slash" style="font-size: 1.2rem; color: #2ecc71;"></i><div style="font-size: 0.65rem; text-align: left; text-transform: uppercase; font-weight: bold; letter-spacing: 1px;">Shadow<br><span style="color:#2ecc71;">ON</span></div>'
+            : '<i class="fa-solid fa-eye-slash" style="font-size: 1.2rem; color: #666;"></i><div style="font-size: 0.65rem; text-align: left; text-transform: uppercase; font-weight: bold; letter-spacing: 1px; color:#666;">Shadow<br><span>OFF</span></div>';
+    }
+    if(isShadow) speak("Mode furtif activé. Concentration maximale.");
+};
+
+// --- 2. GRIP INDEX & 6. IA WINGMAN ---
+window.rideStartTime = null;
+
+setInterval(() => {
+    // Calcul du Grip Index
+    const tempEl = document.getElementById('weather-hud');
+    let grip = 100;
+    if (tempEl) {
+        const tempText = tempEl.innerText;
+        const temp = parseInt(tempText);
+        if (!isNaN(temp)) {
+            if (temp < 10) grip -= 10;
+            if (temp < 5) grip -= 20;
+            if (window.precipRate && window.precipRate > 0) grip -= 30; // Si precip
+        }
+    }
+    const gripHud = document.getElementById('grip-hud');
+    if (gripHud) {
+        gripHud.innerText = grip + '%';
+        gripHud.style.color = grip > 70 ? '#00ffff' : (grip > 40 ? '#f1c40f' : '#ff4d4d');
+    }
+
+    if (grip <= 50 && !window.blackIceAlerted) {
+        speak("Alerte Verglas et adhérence réduite détectée. Grip en dessous de 50 pour cent.");
+        window.blackIceAlerted = true;
+    }
+
+    // IA Wingman (Temps de conduite)
+    if (window.isRiding) {
+        if (!window.rideStartTime) window.rideStartTime = Date.now();
+        const rideDuration = (Date.now() - window.rideStartTime) / 60000; // minutes
+        if (rideDuration > 45 && !window.wingmanAlerted) {
+            speak("Vous roulez depuis 45 minutes. Température moteur optimale atteinte, mais attention à la fatigue. Envisagez une pause bientôt.");
+            window.wingmanAlerted = true;
+        }
+    } else {
+        window.rideStartTime = null;
+        window.wingmanAlerted = false;
+        window.blackIceAlerted = false;
+    }
+}, 30000); // Check toutes les 30s
+
+// --- 3. SONAR DE COMMUNAUTÉ ---
+window.triggerCommunitySonar = function() {
+    if (document.body.classList.contains('shadow-mode')) return; // Furtif
+    
+    // Animation Sonar Center
+    const sonar = document.createElement('div');
+    sonar.className = 'sonar-wave';
+    document.body.appendChild(sonar);
+    
+    setTimeout(() => {
+        // Aléatoirement, trouver un allié (1 chance sur 4)
+        if (Math.random() > 0.75) {
+            speak("Pilote allié détecté dans le secteur.");
+            const ally = document.createElement('div');
+            ally.className = 'ally-marker';
+            // Position aléatoire sur l'écran
+            ally.style.top = (20 + Math.random() * 60) + '%';
+            ally.style.left = (20 + Math.random() * 60) + '%';
+            document.body.appendChild(ally);
+            setTimeout(() => ally.remove(), 6000);
+        }
+        sonar.remove();
+    }, 4000);
+};
+setInterval(window.triggerCommunitySonar, 120000); // Sonar toutes les 2 minutes
+
+// --- 4. GARAGE VIRTUEL (TUNING) ---
+window.updateVirtualTuning = function() {
+    const galets = parseFloat(document.getElementById('tune-galets').value);
+    const gicleur = parseInt(document.getElementById('tune-gicleur').value);
+    
+    // Calcul simplifié (purement ludique/théorique pour un 50cc)
+    // Galets légers (3-5g) = Accel, Lourds (6-8g) = Vmax
+    // Gicleur gros (>70) = Vmax mais engorge si trop gros
+    
+    let accelScore = 10 - ((galets - 3) * 1.5); // de 10 (3g) à ~2.5 (8g)
+    let vmaxScore = 2 + ((galets - 3) * 1.5); // de 2 (3g) à ~9.5 (8g)
+    
+    // Bonus gicleur
+    if (gicleur > 60 && gicleur <= 80) vmaxScore += 1;
+    if (gicleur > 80) { accelScore -= 2; vmaxScore -= 1; } // Engorgement
+    
+    accelScore = Math.max(1, Math.min(10, Math.round(accelScore)));
+    vmaxScore = Math.max(1, Math.min(10, Math.round(vmaxScore)));
+    
+    document.getElementById('tune-accel').innerText = accelScore + '/10';
+    document.getElementById('tune-vmax').innerText = vmaxScore + '/10';
+    document.getElementById('bar-accel').style.width = (accelScore * 10) + '%';
+    document.getElementById('bar-vmax').style.width = (vmaxScore * 10) + '%';
+};
+
+// --- 5. EXPLORATION TACTIQUE (ROUTE ALÉATOIRE) ---
+window.generateTacticalExploration = function() {
+    if (!navigator.geolocation) {
+        alert("GPS requis pour l'exploration.");
+        return;
+    }
+    
+    document.getElementById('route-start').value = "Position Actuelle";
+    document.getElementById('route-search').value = "Génération de boucle...";
+    speak("Calcul d'une boucle d'exploration tactique aléatoire.");
+    
+    navigator.geolocation.getCurrentPosition((pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        
+        // Générer un point aléatoire à ~10-15km (1 degré lat = ~111km)
+        const radiusInDegrees = (10 + Math.random() * 5) / 111;
+        const randomAngle = Math.random() * Math.PI * 2;
+        
+        const destLat = lat + radiusInDegrees * Math.cos(randomAngle);
+        const destLng = lng + (radiusInDegrees * Math.sin(randomAngle)) / Math.cos(lat * Math.PI/180);
+        
+        const destLatLngStr = `${destLat},${destLng}`;
+        
+        setTimeout(() => {
+            document.getElementById('route-search').value = "Zone d'Exploration D-7";
+            startRouteCalculation("current", destLatLngStr);
+        }, 1500);
+    });
+};

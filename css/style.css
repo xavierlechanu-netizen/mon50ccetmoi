@@ -3180,3 +3180,67 @@ body, html {
     fill: none;
     filter: drop-shadow(0 0 4px rgba(0,242,255,0.6));
 }
+
+/* --- SHADOW MODE --- */
+body.shadow-mode {
+    background: #000 !important;
+}
+body.shadow-mode .tactical-nav-bar,
+body.shadow-mode #search-container,
+body.shadow-mode .tactical-sentinel-badge,
+body.shadow-mode #menu-container {
+    display: none !important;
+}
+body.shadow-mode #map {
+    filter: grayscale(1) contrast(1.5) brightness(0.4) !important;
+}
+body.shadow-mode .tactical-speed-panel {
+    background: transparent !important;
+    border: none !important;
+    backdrop-filter: none !important;
+}
+body.shadow-mode .tactical-speed-val {
+    color: #444 !important;
+    text-shadow: none !important;
+}
+
+/* --- SONAR COMMUNAUTAIRE --- */
+.sonar-wave {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    background: transparent;
+    border: 2px solid #9b59b6;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 9999;
+    animation: sonar-ping 4s ease-out infinite;
+}
+@keyframes sonar-ping {
+    0% { width: 0; height: 0; opacity: 1; border-width: 5px; }
+    100% { width: 500px; height: 500px; opacity: 0; border-width: 1px; }
+}
+
+/* --- ALLY MARKER --- */
+.ally-marker {
+    position: absolute;
+    width: 15px;
+    height: 15px;
+    background: #9b59b6;
+    border-radius: 50%;
+    box-shadow: 0 0 15px #9b59b6;
+    z-index: 10000;
+    pointer-events: none;
+    animation: ally-fade 6s forwards;
+}
+@keyframes ally-fade {
+    0% { opacity: 0; transform: scale(0); }
+    10% { opacity: 1; transform: scale(1.5); }
+    20% { opacity: 1; transform: scale(1); }
+    80% { opacity: 1; }
+    100% { opacity: 0; }
+}
