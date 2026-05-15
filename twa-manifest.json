@@ -20,8 +20,8 @@
                        "path":  "./upload-keystore.jks",
                        "alias":  "upload"
                    },
-    "appVersionName":  "60.0.7",
-    "appVersionCode":  60007,
+    "appVersionName":  "60.0.9",
+    "appVersionCode":  60009,
     "shortcuts":  [
 
                   ],

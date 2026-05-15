@@ -57,8 +57,8 @@ android {
         applicationId "com.mon50ccetmoi.twa"
         minSdkVersion 21
         targetSdkVersion 35
-        versionCode 60007
-        versionName "60.0.7"
+        versionCode 60009
+        versionName "60.0.9"
 
         // The name for the application
         resValue "string", "appName", twaManifest.name
@@ -208,5 +208,6 @@ dependencies {
         implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.6.2'
     
 }
+
 
 

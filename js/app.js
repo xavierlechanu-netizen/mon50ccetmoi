@@ -3659,18 +3659,19 @@ window.showPage = function(page) {
         if (!overlay || !content) return;
         overlay.classList.remove('hidden');
         
-                window.BlackBoxDict = window.BlackBoxDict || {
+                        window.BlackBoxDict = window.BlackBoxDict || {
             'fr': { 
                 title: "Black Box Assurance", 
-                subtitle: "Expertise Numérique Multi-Niveaux", 
-                desc: "Rapport d'incident certifié. 3 niveaux d'expertise disponibles pour les assurances :<br>• <strong>Basique (49.99€)</strong> : Vitesse & Position.<br>• <strong>Intermédiaire (89.99€)</strong> : Télémétrie + Éco-Data.<br>• <strong>Expert (149.99€)</strong> : Reconstruction 3D + G-Force + Inclinaison.", 
+                subtitle: "Sécurité & Conformité Européenne (RGPD)", 
+                desc: "Votre Black Box enregistre vos données de conduite localement sur votre téléphone. <br><br>Conformément au <strong>RGPD</strong>, vous gardez le contrôle total :<br>• Données cryptées et stockées localement.<br>• Aucune transmission sans votre activation explicite.<br>• Droit de suppression intégrale à tout moment.", 
                 available: "Données disponibles", 
                 pts: "points GPS enregistrés.", 
                 replay: "Rejouer le Trajet", 
-                generate: "Générer Rapport Expert (Simulation)", 
+                generate: "Expertise Assurance", 
                 nodata: "Aucun trajet enregistré.", 
-                footer: "Service facturé à l'assurance : 49.99€ à 149.99€ selon le niveau d'expertise." 
-            },
+                footer: "Certifié conforme aux réglementations européennes sur la protection des données." 
+            }
+        };,
             'en': { 
                 title: "Black Box Insurance", 
                 subtitle: "Multi-Level Digital Expertise", 
@@ -3706,11 +3707,21 @@ window.showPage = function(page) {
                 <button onclick="window.BlackBoxReplay.replay()" class="btn-insurance" style="width:100%; margin-bottom:10px; background:#3498db;">
                     <i class="fa-solid fa-play"></i> ${t.replay}
                 </button>
-                <button onclick="window.BlackBoxInsurance.generateReport()" class="btn-insurance" style="width:100%; background:linear-gradient(135deg,#2ecc71,#27ae60); color:white;">
-                    <i class="fa-solid fa-file-shield"></i> ${t.generate}
+                <div style="background:rgba(255,255,255,0.05); border:1px dashed #555; border-radius:12px; padding:15px; text-align:center; margin-top:10px;">
+                    <span style="font-size:0.6rem; color:#888; text-transform:uppercase; letter-spacing:1px;">Code Expertise Assurance</span>
+                    <div style="font-family:monospace; font-size:1.2rem; color:var(--neon-blue); margin:5px 0;">BB-#{Math.floor(Math.random()*900000 + 100000)}</div>
+                    <p style="font-size:0.65rem; color:#666;">Donnez ce code à votre assureur pour qu'il puisse accéder à vos données certifiées sur le portail pro.</p>
+                </div>
+                <button onclick="alert('L\'assureur a maintenant accès à votre dossier via votre code.')" class="btn-insurance" style="width:100%; margin-top:10px; background:linear-gradient(135deg,#34495e,#2c3e50); color:white; border:1px solid #555;">
+                    <i class="fa-solid fa-paper-plane"></i> Activer la transmission expert
                 </button>
             ` : `<p style="text-align:center; color:#444; padding:30px;">${t.nodata}</p>`}
-            <p style="font-size:0.6rem; color:#333; text-align:center; margin-top:20px;">${t.footer}</p>`;
+                        <div style="margin-top:30px; border-top:1px solid #333; padding-top:15px;">
+                <p style="font-size:0.6rem; color:#666; text-align:center;">${t.footer}</p>
+                <button onclick="if(confirm('Supprimer définitivement toutes vos données de conduite ?')){ sessionStorage.removeItem('blackbox_last_ride'); localStorage.clear(); location.reload(); }" style="width:100%; margin-top:15px; background:none; border:1px solid #c0392b; color:#c0392b; padding:8px; border-radius:8px; font-size:0.65rem; cursor:pointer;">
+                    <i class="fa-solid fa-trash-can"></i> Supprimer mes données (Droit à l'oubli RGPD)
+                </button>
+            </div>`;
         return;
     }
     return _origShowPage.apply(this, arguments);
@@ -3781,6 +3792,7 @@ window.BlackBoxInsurance = {
         URL.revokeObjectURL(url);
     }
 };
+
 
 
 
