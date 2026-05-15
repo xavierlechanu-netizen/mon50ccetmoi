@@ -3473,13 +3473,7 @@ window.triggerCommunitySonar = function() {
 };
 setInterval(window.triggerCommunitySonar, 120000); // Sonar toutes les 2 minutes
 
-    vmaxScore = Math.max(1, Math.min(10, Math.round(vmaxScore)));
-    
-    document.getElementById('tune-accel').innerText = accelScore + '/10';
-    document.getElementById('tune-vmax').innerText = vmaxScore + '/10';
-    document.getElementById('bar-accel').style.width = (accelScore * 10) + '%';
-    document.getElementById('bar-vmax').style.width = (vmaxScore * 10) + '%';
-};
+
 
 // --- 5. EXPLORATION TACTIQUE (ROUTE ALÉATOIRE) ---
 window.generateTacticalExploration = function() {
@@ -3731,4 +3725,5 @@ window.BlackBoxInsurance = {
         URL.revokeObjectURL(url);
     }
 };
+
 
