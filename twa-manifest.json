@@ -15,12 +15,13 @@
   "startUrl": "/com.mon50ccetmoi.tws/",
   "iconUrl": "https://www.gstatic.com/images/branding/product/2x/googleg_96dp.png",
   "maskableIconUrl": "https://www.gstatic.com/images/branding/product/2x/googleg_96dp.png",
+  "splashScreenFadeOutDuration": 300,
   "signingKey": {
     "path": "./upload-keystore.jks",
     "alias": "upload"
   },
-  "appVersionName": "50.1.10",
-  "appVersionCode": 52037,
+  "appVersionName": "50.1.11",
+  "appVersionCode": 52041,
   "shortcuts": [],
   "generatorApp": "bubblewrap-cli",
   "webManifestUrl": "https://xavierlechanu-netizen.github.io/com.mon50ccetmoi.tws/manifest.json",
@@ -41,5 +42,5 @@
   ],
   "retainedBundles": [],
   "displayOverride": [],
-  "appVersion": "50.1.9"
+  "appVersion": "y"
 }
