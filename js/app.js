@@ -565,6 +565,13 @@ function updatePosition(position) {
         map.setCenter(currentPosition);
         console.log("mon50cc GPS : Premier FIX reçu, centrage carte.");
         
+        if (!window.hasWelcomed) {
+            window.hasWelcomed = true;
+            if (typeof triggerRegionalWelcome === 'function') {
+                triggerRegionalWelcome(lat, lng);
+            }
+        }
+        
         // Si une destination attendait le GPS, on la lance maintenant
         if (window.pendingDestinationName) {
             console.log("mon50cc GPS : Lancement de l'itinéraire en attente vers : " + window.pendingDestinationName);
