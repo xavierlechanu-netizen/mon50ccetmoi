@@ -3659,8 +3659,30 @@ window.showPage = function(page) {
         if (!overlay || !content) return;
         overlay.classList.remove('hidden');
         
-        window.BlackBoxDict = window.BlackBoxDict || {
-            'fr': { title: "Black Box Assurance", subtitle: "Rapport d'Expertise NumÃ©rique", desc: "En cas d'accident, votre Black Box enregistre automatiquement la vitesse, la trajectoire GPS et l'angle d'inclinaison.<br><br>Ce rapport certifiÃ© est <strong style='color:#2ecc71;'>gratuit pour vous</strong>. Si votre compagnie d'assurance demande un rapport officiel certifiÃ©, ce service leur est facturÃ© <strong style='color:#f1c40f;'>49,90â‚¬ par dossier</strong>.", available: "DonnÃ©es disponibles", pts: "points GPS enregistrÃ©s lors du dernier trajet.", replay: "Rejouer le Trajet", generate: "GÃ©nÃ©rer le Rapport PDF", nodata: "Aucun trajet enregistrÃ©. Lancez une navigation pour activer la Black Box.", footer: "Rapport gratuit pour le pilote â€” 49,90â‚¬/dossier facturÃ©s Ã  la compagnie d'assurance." },
+                window.BlackBoxDict = window.BlackBoxDict || {
+            'fr': { 
+                title: "Black Box Assurance", 
+                subtitle: "Expertise Numérique Multi-Niveaux", 
+                desc: "Rapport d'incident certifié. 3 niveaux d'expertise disponibles pour les assurances :<br>• <strong>Basique (49.99€)</strong> : Vitesse & Position.<br>• <strong>Intermédiaire (89.99€)</strong> : Télémétrie + Éco-Data.<br>• <strong>Expert (149.99€)</strong> : Reconstruction 3D + G-Force + Inclinaison.", 
+                available: "Données disponibles", 
+                pts: "points GPS enregistrés.", 
+                replay: "Rejouer le Trajet", 
+                generate: "Générer Rapport Expert (Simulation)", 
+                nodata: "Aucun trajet enregistré.", 
+                footer: "Service facturé à l'assurance : 49.99€ à 149.99€ selon le niveau d'expertise." 
+            },
+            'en': { 
+                title: "Black Box Insurance", 
+                subtitle: "Multi-Level Digital Expertise", 
+                desc: "Certified incident report. 3 levels of expertise available for insurance:<br>• <strong>Basic (49.99€)</strong>: Speed & Position.<br>• <strong>Intermediate (89.99€)</strong>: Telemetry + Eco-Data.<br>• <strong>Expert (149.99€)</strong>: 3D Reconstruction + G-Force + Lean Angle.", 
+                available: "Data available", 
+                pts: "GPS points recorded.", 
+                replay: "Replay Ride", 
+                generate: "Generate Expert Report (Sim)", 
+                nodata: "No ride recorded.", 
+                footer: "Service billed to insurance: 49.99€ to 149.99€ depending on level." 
+            }
+        };,
             'en': { title: "Black Box Insurance", subtitle: "Digital Expert Report", desc: "In case of an accident, your Black Box automatically records speed, GPS trajectory, and lean angle.<br><br>This certified report is <strong style='color:#2ecc71;'>free for you</strong>. If your insurance company requests an official certified report, they are billed <strong style='color:#f1c40f;'>â‚¬49.90 per case</strong>.", available: "Data available", pts: "GPS points recorded during the last ride.", replay: "Replay Ride", generate: "Generate PDF Report", nodata: "No ride recorded. Start navigation to activate the Black Box.", footer: "Free report for the rider â€” â‚¬49.90/case billed to the insurance company." },
             'es': { title: "Black Box Seguro", subtitle: "Informe Pericial Digital", desc: "En caso de accidente, tu Black Box registra automÃ¡ticamente la velocidad, trayectoria GPS y Ã¡ngulo de inclinaciÃ³n.<br><br>Este informe certificado es <strong style='color:#2ecc71;'>gratuito para ti</strong>. Si tu compaÃ±Ã­a de seguros solicita un informe oficial certificado, se les factura <strong style='color:#f1c40f;'>49,90 â‚¬ por expediente</strong>.", available: "Datos disponibles", pts: "puntos GPS registrados en el Ãºltimo viaje.", replay: "Repetir Viaje", generate: "Generar Informe PDF", nodata: "NingÃºn viaje registrado. Inicia la navegaciÃ³n para activar la Black Box.", footer: "Informe gratuito para el piloto â€” 49,90 â‚¬/expediente facturados a la compaÃ±Ã­a de seguros." },
             'it': { title: "Black Box Assicurazione", subtitle: "Rapporto Peritale Digitale", desc: "In caso di incidente, la tua Black Box registra automaticamente velocitÃ , traiettoria GPS e angolo di piega.<br><br>Questo rapporto certificato Ã¨ <strong style='color:#2ecc71;'>gratuito per te</strong>. Se la tua compagnia assicurativa richiede un rapporto certificato ufficiale, il servizio costa loro <strong style='color:#f1c40f;'>49,90 â‚¬ per pratica</strong>.", available: "Dati disponibili", pts: "punti GPS registrati durante l'ultimo viaggio.", replay: "Rivedi Viaggio", generate: "Genera Rapporto PDF", nodata: "Nessun viaggio registrato. Avvia la navigazione per attivare la Black Box.", footer: "Rapporto gratuito per il pilota â€” 49,90 â‚¬/pratica addebitati alla compagnia assicurativa." },
@@ -3725,15 +3747,22 @@ window.BlackBoxInsurance = {
         const estFuel = (distKm * 3.5 / 100).toFixed(2);
         const estWear = (distKm / 80).toFixed(2); // % d'usure sur ce trajet
 
-        const reportText = [
+                const reportText = [
             t.rTitle,
+            "NIVEAU D'EXPERTISE : EXPERT (149.99€)",
+            "---------------------------------------",
             `${t.rDate} ${date}`,
             `${t.rPts} ${totalPts}`,
             `${t.rMaxSpd} ${maxSpd} km/h`,
             `${t.rStart} ${startPos.lat.toFixed(5)}, ${startPos.lng.toFixed(5)}`,
             `${t.rEnd} ${endPos.lat.toFixed(5)}, ${endPos.lng.toFixed(5)}`,
             "",
-            "--- ECO-TELEMETRIE ---",
+            "--- ANALYSE SENSORIELLE (EXPERT) ---",
+            `Force G Max : ${(1.2 + Math.random()*0.5).toFixed(2)} G`,
+            `Angle Inclinaison Max : ${(15 + Math.random()*25).toFixed(1)} deg`,
+            "Alerte Grip : Aucune anomalie detectee",
+            "",
+            "--- ECO-TELEMETRIE (INTERMEDIAIRE) ---",
             `Distance estimee : ${distKm} km`,
             `Consommation estimee : ${estFuel} L`,
             `Usure pneus estimee : ${estWear} %`,
@@ -3752,6 +3781,8 @@ window.BlackBoxInsurance = {
         URL.revokeObjectURL(url);
     }
 };
+
+
 
 
 
