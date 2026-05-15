@@ -88,7 +88,7 @@ history.pushState(null, null, window.location.pathname);
 // escapeHTML est maintenant défini dans auth.js (global)
 
 // --- BOOT ---
-console.log("mon50ccetmoi v50.1.8-GOLD-ULTIMATE : Production Ready.");
+console.log("mon50ccetmoi v50.1.9-GOLD-ULTIMATE : Production Ready.");
 
 let map;
 let directionsService;
@@ -262,7 +262,7 @@ window.initMapController = async function() {
 window.startApp = function() {
     if (window.appStarted) return;
     window.appStarted = true;
-    console.log("mon50cc Master Controller : Démarrage de la séquence d'initialisation v50.1.8-GOLD-ULTIMATE...");
+    console.log("mon50cc Master Controller : Démarrage de la séquence d'initialisation v50.1.9-GOLD-ULTIMATE...");
     runCinematicStartup();
     
     checkTrialExpiration();
@@ -317,14 +317,11 @@ window.startApp = function() {
         const loader = document.getElementById('app-loader');
         if (loader) {
             loader.style.opacity = '0';
-        // Le message vocal est maintenant déclenché après le consentement ou l'interaction pour garantir le son
-        updateUILabels();
-        if (typeof renderCommunityMarkers === "function") renderCommunityMarkers();
         }
         updateUILabels();
         if (typeof renderCommunityMarkers === "function") renderCommunityMarkers();
         if (typeof simulateLiveFleet === "function") simulateLiveFleet();
-        console.log("mon50cc v50.1.8-GOLD-ULTIMATE : Système prêt.");
+        console.log("mon50cc v50.1.9-GOLD-ULTIMATE : Système prêt.");
     }, 3500);
 
     // Lancement de la géolocalisation

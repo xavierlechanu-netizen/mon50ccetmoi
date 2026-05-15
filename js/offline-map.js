@@ -186,7 +186,8 @@ window.OfflineMapManager = (function() {
                 limit: 5,
                 countrycodes: 'fr',
                 viewbox: `${lng - 0.5},${lat + 0.5},${lng + 0.5},${lat - 0.5}`,
-                bounded: 1
+                bounded: 1,
+                email: 'contact@mon50cc.com'
             });
             const resp = await fetch(`${NOMINATIM_URL}/search?${params}`, {
                 headers: { 'Accept-Language': 'fr' }
