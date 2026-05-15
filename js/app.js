@@ -1337,14 +1337,17 @@ async function calculateRouteSansAutoroute(start, end) {
             let durationSec = parseInt(route.duration.replace('s', ''));
 
             // --- AJUSTEMENT 50cc ---
-            // Un 50cc est bridé à 45km/h. On prend une vitesse moyenne max de 40 km/h (11.11 m/s)
-            // Si Google prévoit une vitesse moyenne supérieure (ex: routes hors agglo), on recalcule.
+            durationSec = Math.round(durationSec * 1.20); // +20% pour scooter 50cc en ville
             const maxSpeedMs = 40 / 3.6; 
             const googleSpeedMs = route.distanceMeters / durationSec;
             if (googleSpeedMs > maxSpeedMs) {
                 durationSec = Math.round(route.distanceMeters / maxSpeedMs);
                 if (window.Telemetry) window.Telemetry.addLog("INFO", `ETA ajusté pour 50cc (vitesse native trop élevée).`);
             }
+            
+            const destName = document.getElementById('route-search').value || 'ITINÉRAIRE 50CC';
+            const titleEl = document.querySelector('.route-title');
+            if (titleEl) titleEl.textContent = destName.toUpperCase();
 
             let durationText;
             const totalMins = Math.floor(durationSec / 60);
@@ -1420,11 +1423,16 @@ async function calculateRouteSansAutoroute(start, end) {
             const distanceMeters = leg.distance.value;
 
             // --- AJUSTEMENT 50cc ---
+            durationSec = Math.round(durationSec * 1.20); // +20% pour scooter 50cc en ville
             const maxSpeedMs = 40 / 3.6; 
             const googleSpeedMs = distanceMeters / durationSec;
             if (googleSpeedMs > maxSpeedMs) {
                 durationSec = Math.round(distanceMeters / maxSpeedMs);
             }
+            
+            const destNameLegacy = document.getElementById('route-search').value || 'ITINÉRAIRE 50CC';
+            const titleElLegacy = document.querySelector('.route-title');
+            if (titleElLegacy) titleElLegacy.textContent = destNameLegacy.toUpperCase();
 
             let durationTextStr;
             const totalMins = Math.floor(durationSec / 60);

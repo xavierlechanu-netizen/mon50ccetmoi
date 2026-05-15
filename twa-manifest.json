@@ -13,14 +13,14 @@
   "backgroundColor": "#000000",
   "enableNotifications": true,
   "startUrl": "/com.mon50ccetmoi.tws/",
-  "iconUrl": "https://xavierlechanu-netizen.github.io/com.mon50ccetmoi.tws/assets/ui/qrcode_mon50cc.png",
-  "maskableIconUrl": "https://xavierlechanu-netizen.github.io/com.mon50ccetmoi.tws/assets/ui/qrcode_mon50cc.png",
+  "iconUrl": "https://www.gstatic.com/images/branding/product/2x/googleg_96dp.png",
+  "maskableIconUrl": "https://www.gstatic.com/images/branding/product/2x/googleg_96dp.png",
   "signingKey": {
     "path": "./upload-keystore.jks",
     "alias": "upload"
   },
-  "appVersionName": "50.1.8",
-  "appVersionCode": 52027,
+  "appVersionName": "50.1.10",
+  "appVersionCode": 52037,
   "shortcuts": [],
   "generatorApp": "bubblewrap-cli",
   "webManifestUrl": "https://xavierlechanu-netizen.github.io/com.mon50ccetmoi.tws/manifest.json",
@@ -41,5 +41,5 @@
   ],
   "retainedBundles": [],
   "displayOverride": [],
-  "appVersion": "50.1.8"
+  "appVersion": "50.1.9"
 }
