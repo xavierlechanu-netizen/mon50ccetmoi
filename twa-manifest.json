@@ -20,8 +20,8 @@
     "path": "./upload-keystore.jks",
     "alias": "upload"
   },
-  "appVersionName": "60.0.1",
-  "appVersionCode": 60002,
+  "appVersionName": "60.0.5",
+  "appVersionCode": 60005,
   "shortcuts": [],
   "generatorApp": "bubblewrap-cli",
   "webManifestUrl": "https://xavierlechanu-netizen.github.io/com.mon50ccetmoi.tws/manifest.json",
