@@ -1,4 +1,4 @@
-﻿// --- CORE NAVIGATION (SAFE ZONE) ---
+// --- CORE NAVIGATION (SAFE ZONE) ---
 window.toggleMenu = function() {
     try {
         const sidebar = document.getElementById('sidebar');
@@ -3663,7 +3663,7 @@ window.showPage = function(page) {
             'fr': { 
                 title: "Black Box Assurance", 
                 subtitle: "Sécurité & Conformité Européenne (RGPD)", 
-                desc: "Votre Black Box enregistre vos données de conduite localement sur votre téléphone. <br><br>Conformément au <strong>RGPD</strong>, vous gardez le contrôle total :<br>• Données cryptées et stockées localement.<br>• Aucune transmission sans votre activation explicite.<br>• Droit de suppression intégrale à tout moment.", 
+                desc: "Votre Black Box enregistre vos données localement. <br><br>🛡️ <strong>Protection du Pilote :</strong><br>• Stockage local 100% privé.<br>• <strong>Transmission UNIQUEMENT en cas de litige</strong> (accident, vol, contestation).<br>• L'assurance n'a accès à rien sans votre code expertise.", 
                 available: "Données disponibles", 
                 pts: "points GPS enregistrés.", 
                 replay: "Rejouer le Trajet", 
@@ -3712,8 +3712,8 @@ window.showPage = function(page) {
                     <div style="font-family:monospace; font-size:1.2rem; color:var(--neon-blue); margin:5px 0;">BB-#{Math.floor(Math.random()*900000 + 100000)}</div>
                     <p style="font-size:0.65rem; color:#666;">Donnez ce code à votre assureur pour qu'il puisse accéder à vos données certifiées sur le portail pro.</p>
                 </div>
-                <button onclick="alert('L\'assureur a maintenant accès à votre dossier via votre code.')" class="btn-insurance" style="width:100%; margin-top:10px; background:linear-gradient(135deg,#34495e,#2c3e50); color:white; border:1px solid #555;">
-                    <i class="fa-solid fa-paper-plane"></i> Activer la transmission expert
+                <button onclick="alert('L\'assureur a maintenant accès à votre dossier de litige via votre code.')" class="btn-insurance" style="width:100%; margin-top:10px; background:linear-gradient(135deg,#34495e,#2c3e50); color:white; border:1px solid #555;">
+                    <i class="fa-solid fa-gavel"></i> Activer uniquement pour litige
                 </button>
             ` : `<p style="text-align:center; color:#444; padding:30px;">${t.nodata}</p>`}
                         <div style="margin-top:30px; border-top:1px solid #333; padding-top:15px;">
