@@ -1385,11 +1385,8 @@ async function calculateRouteSansAutoroute(start, end) {
                 }
             }
 
-            if (window.isRodageActive) {
-                speak(`Itinéraire rodage calculé. ${distKm} à parcourir.`);
-            } else {
-                speak(`Itinéraire calculé. ${distKm}, arrivée prévue à ${etaEl ? etaEl.textContent : ''}.`);
-            }
+            const etaText = etaEl ? etaEl.textContent : '';
+            speak(window.getLocalizedRouteMsg(distKm, etaText, window.isRodageActive));
 
             return; // Succès
         }
@@ -1472,11 +1469,8 @@ async function calculateRouteSansAutoroute(start, end) {
                 }
             }
             
-            if (window.isRodageActive) {
-                speak(`Itinéraire rodage calculé. ${leg.distance.text} à parcourir.`);
-            } else {
-                speak(`Itinéraire calculé. ${leg.distance.text}, arrivée prévue à ${etaEl ? etaEl.textContent : ''}.`);
-            }
+            const etaText = etaEl ? etaEl.textContent : '';
+            speak(window.getLocalizedRouteMsg(leg.distance.text, etaText, window.isRodageActive));
 
             if(destinationMarker) destinationMarker.setMap(null);
             destinationMarker = new google.maps.Marker({
@@ -3291,4 +3285,152 @@ function generateRideCard() {
     `;
     document.body.appendChild(overlay);
 }
+
+// --- ORACLE: MESSAGES RÉGIONAUX MULTILINGUES ---
+window.hasWelcomed = false;
+
+const REGION_MESSAGES = {
+    "bretagne": {
+        "fr": "Bienvenue en Bretagne. Prudence sur les routes potentiellement humides.",
+        "en": "Welcome to Brittany. Watch out for damp roads.",
+        "es": "Bienvenido a Bretaña. Precaución en carreteras mojadas.",
+        "de": "Willkommen in der Bretagne. Vorsicht auf nassen Straßen.",
+        "it": "Benvenuti in Bretagna. Attenzione alle strade umide."
+    },
+    "normandie": {
+        "fr": "Bienvenue en Normandie. Restez vigilant face au vent et aux averses.",
+        "en": "Welcome to Normandy. Be prepared for wind and showers.",
+        "es": "Bienvenido a Normandía. Cuidado con el viento y la lluvia.",
+        "de": "Willkommen in der Normandie. Achten Sie auf Wind und Schauer.",
+        "it": "Benvenuti in Normandia. Attenzione al vento e alle piogge."
+    },
+    "île-de-france": {
+        "fr": "Bienvenue en Île-de-France. Densité de trafic élevée, gardez vos distances.",
+        "en": "Welcome to Île-de-France. High traffic density, keep your distance.",
+        "es": "Bienvenido a Isla de Francia. Alta densidad de tráfico, mantenga su distancia.",
+        "de": "Willkommen in der Île-de-France. Hohe Verkehrsdichte, halten Sie Abstand.",
+        "it": "Benvenuti nell'Île-de-France. Alta densità di traffico, mantieni le distanze."
+    },
+    "provence-alpes-côte d'azur": {
+        "fr": "Bienvenue dans le Sud. La route est dégagée. Pensez à vous hydrater.",
+        "en": "Welcome to the South. The road is clear. Remember to stay hydrated.",
+        "es": "Bienvenido al Sur. La ruta está despejada. Recuerde hidratarse.",
+        "de": "Willkommen im Süden. Die Straße ist frei. Denken Sie daran, ausreichend zu trinken.",
+        "it": "Benvenuti al Sud. La strada è libera. Ricordati di idratarti."
+    },
+    "auvergne-rhône-alpes": {
+        "fr": "Bienvenue en région Rhône-Alpes. Attention aux routes sinueuses en montagne.",
+        "en": "Welcome to the Rhône-Alpes region. Watch out for winding mountain roads.",
+        "es": "Bienvenido a la región de Ródano-Alpes. Cuidado con las carreteras sinuosas de montaña.",
+        "de": "Willkommen in der Region Auvergne-Rhône-Alpes. Vorsicht auf kurvigen Bergstraßen.",
+        "it": "Benvenuti nella regione Rodano-Alpi. Attenzione alle strade tortuose di montagna."
+    },
+    "nouvelle-aquitaine": {
+        "fr": "Bienvenue en Nouvelle-Aquitaine. De belles balades en perspective.",
+        "en": "Welcome to New Aquitaine. Beautiful rides ahead.",
+        "es": "Bienvenido a Nueva Aquitania. Hermosos paseos por delante.",
+        "de": "Willkommen in Nouvelle-Aquitaine. Schöne Fahrten voraus.",
+        "it": "Benvenuti in Nuova Aquitania. Bellissimi giri in arrivo."
+    },
+    "occitanie": {
+        "fr": "Bienvenue en Occitanie. Soleil et belles routes vous attendent.",
+        "en": "Welcome to Occitania. Sun and beautiful roads await you.",
+        "es": "Bienvenido a Occitania. Sol y hermosas carreteras le esperan.",
+        "de": "Willkommen in Okzitanien. Sonne und schöne Straßen erwarten Sie.",
+        "it": "Benvenuti in Occitania. Sole e bellissime strade vi aspettano."
+    },
+    "hauts-de-france": {
+        "fr": "Bienvenue dans les Hauts-de-France. Gardez le contrôle.",
+        "en": "Welcome to Hauts-de-France. Keep control.",
+        "es": "Bienvenido a Hauts-de-France. Mantenga el control.",
+        "de": "Willkommen in Hauts-de-France. Behalten Sie die Kontrolle.",
+        "it": "Benvenuti nell'Alta Francia. Mantieni il controllo."
+    },
+    "grand est": {
+        "fr": "Bienvenue dans le Grand Est. Excellente balade.",
+        "en": "Welcome to the Grand Est. Have an excellent ride.",
+        "es": "Bienvenido al Gran Este. Excelente paseo.",
+        "de": "Willkommen im Grand Est. Ausgezeichnete Fahrt.",
+        "it": "Benvenuti nel Grand Est. Ottimo viaggio."
+    },
+    "bourgogne-franche-comté": {
+        "fr": "Bienvenue en Bourgogne. Conduite souple recommandée.",
+        "en": "Welcome to Burgundy. Smooth driving recommended.",
+        "es": "Bienvenido a Borgoña. Se recomienda conducción suave.",
+        "de": "Willkommen in Burgund. Eine ruhige Fahrweise wird empfohlen.",
+        "it": "Benvenuti in Borgogna. Si consiglia una guida fluida."
+    },
+    "pays de la loire": {
+        "fr": "Bienvenue. L'Oracle est connecté pour votre balade.",
+        "en": "Welcome. The Oracle is connected for your ride.",
+        "es": "Bienvenido. El Oráculo está conectado para su viaje.",
+        "de": "Willkommen. Das Orakel ist für Ihre Fahrt verbunden.",
+        "it": "Benvenuto. L'Oracolo è connesso per il tuo viaggio."
+    },
+    "default": {
+        "fr": "Oracle connecté. Position GPS établie, prêt pour le départ.",
+        "en": "Oracle connected. GPS position established, ready to go.",
+        "es": "Oráculo conectado. Posición GPS establecida, listo para salir.",
+        "de": "Orakel verbunden. GPS-Position ermittelt, abfahrbereit.",
+        "it": "Oracolo connesso. Posizione GPS stabilita, pronti per partire."
+    }
+};
+
+window.triggerRegionalWelcome = function(lat, lng) {
+    const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=fr`;
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            let regionKey = "default";
+            if (data && data.address) {
+                let regionName = data.address.state || data.address.region || "";
+                regionName = regionName.toLowerCase();
+                for (let key in REGION_MESSAGES) {
+                    if (key !== "default" && regionName.includes(key)) {
+                        regionKey = key;
+                        break;
+                    }
+                }
+            }
+            let langCode = navigator.language.split('-')[0].toLowerCase();
+            if (!["fr", "en", "es", "de", "it"].includes(langCode)) langCode = "en";
+            speak(REGION_MESSAGES[regionKey][langCode]);
+        })
+        .catch(err => {
+            console.error("Erreur Geocoding Inverse pour Oracle:", err);
+            let langCode = navigator.language.split('-')[0].toLowerCase();
+            if (!["fr", "en", "es", "de", "it"].includes(langCode)) langCode = "en";
+            speak(REGION_MESSAGES["default"][langCode]);
+        });
+};
+
+window.getLocalizedRouteMsg = function(dist, etaText, isRodage) {
+    let langCode = navigator.language.split('-')[0].toLowerCase();
+    if (!["fr", "en", "es", "de", "it"].includes(langCode)) langCode = "en";
+
+    const msgs = {
+        "fr": {
+            rodage: `Itinéraire rodage calculé. ${dist} à parcourir. Bonne route avec mon 50 cc et moi.`,
+            normal: `Itinéraire calculé. ${dist}, arrivée prévue à ${etaText}. Bonne route avec mon 50 cc et moi.`
+        },
+        "en": {
+            rodage: `Break-in route calculated. ${dist} to go. Have a good ride with mon 50 cc et moi.`,
+            normal: `Route calculated. ${dist}, estimated arrival at ${etaText}. Have a good ride with mon 50 cc et moi.`
+        },
+        "es": {
+            rodage: `Ruta de rodaje calculada. Faltan ${dist}. Buen viaje con mon 50 cc et moi.`,
+            normal: `Ruta calculada. ${dist}, llegada estimada a las ${etaText}. Buen viaje con mon 50 cc et moi.`
+        },
+        "de": {
+            rodage: `Einfahrroute berechnet. ${dist} zu fahren. Gute Fahrt mit mon 50 cc et moi.`,
+            normal: `Route berechnet. ${dist}, voraussichtliche Ankunft um ${etaText}. Gute Fahrt mit mon 50 cc et moi.`
+        },
+        "it": {
+            rodage: `Percorso di rodaggio calcolato. ${dist} da percorrere. Buon viaggio con mon 50 cc et moi.`,
+            normal: `Percorso calcolato. ${dist}, arrivo previsto alle ${etaText}. Buon viaggio con mon 50 cc et moi.`
+        }
+    };
+    
+    return isRodage ? msgs[langCode].rodage : msgs[langCode].normal;
+};
 
