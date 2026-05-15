@@ -473,10 +473,12 @@ function startGeolocation() {
         return;
     }
 
+    // Warm-up
+    navigator.geolocation.getCurrentPosition(updatePosition, () => {}, {enableHighAccuracy: false, timeout: 5000, maximumAge: 0});
     const geoOptions = {
         enableHighAccuracy: true,
-        timeout: 30000,
-        maximumAge: Infinity
+        timeout: 10000,
+        maximumAge: 0
     };
 
     const onError = (err) => {
@@ -492,7 +494,7 @@ function startGeolocation() {
 
         // Retry with low accuracy after failure
         setTimeout(() => {
-            navigator.geolocation.watchPosition(updatePosition, (e) => console.warn("GPS low-acc fallback:", e), { enableHighAccuracy: false, timeout: 30000, maximumAge: 10000 });
+            navigator.geolocation.watchPosition(updatePosition, (e) => console.warn("GPS low-acc fallback:", e), { enableHighAccuracy: false, timeout: 10000, maximumAge: 10000 });
         }, 3000);
     };
 
@@ -3501,3 +3503,4 @@ window.generateTacticalExploration = function() {
         }, 1500);
     });
 };
+
