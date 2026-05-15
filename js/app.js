@@ -1,4 +1,4 @@
-// --- CORE NAVIGATION (SAFE ZONE) ---
+﻿// --- CORE NAVIGATION (SAFE ZONE) ---
 window.toggleMenu = function() {
     try {
         const sidebar = document.getElementById('sidebar');
@@ -3731,6 +3731,37 @@ window.showPage = function(page) {
 // BLACK BOX INSURANCE : Rapport PDF (simulation)
 // ============================================================
 window.BlackBoxInsurance = {
+        generateExpertDemo() {
+        console.log("[Demo] Génération forcée d'un rapport EXPERT ULTRA (149.99€)...");
+        // Mock data if empty
+        const mockFrames = [
+            { lat: 48.8566, lng: 2.3522, spd: 45 },
+            { lat: 48.8500, lng: 2.3400, spd: 48 }
+        ];
+        sessionStorage.setItem('blackbox_last_ride', JSON.stringify(mockFrames));
+        
+        // Custom Expert template
+        const date = new Date().toLocaleDateString();
+        const report = [
+            "=== RAPPORT mon50ccetmoi EXPERT ULTRA (Certifié) ===",
+            "Niveau : EXPERT (Facturé 149.99€)",
+            "ID Dossier : DEMO-ULTRA-99",
+            "--------------------------------------------------",
+            "Vitesse Max : 48 km/h",
+            "Force G Max : 1.25 G (Freinage d'urgence détecté)",
+            "Angle Inclinaison : 32.5 deg",
+            "Météo : 19°C, Sec",
+            "Intégrité : Signature Numérique Valide",
+            "--------------------------------------------------",
+            "Ce rapport contient des données sensorielles haute précision.",
+            "Usage exclusif pour expertise judiciaire ou assurance."
+        ].join('\n');
+        
+        const blob = new Blob([report], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = "Rapport_EXPERT_ULTRA_DEMO.txt"; a.click();
+    },
     generateReport() {
         const frames = JSON.parse(sessionStorage.getItem('blackbox_last_ride') || '[]');
         if (!frames.length) { alert("Aucune donnÃ©e disponible / No data"); return; }
@@ -3828,3 +3859,5 @@ window.DisputeAutomation = {
         return { caseId, pilotCode, secureLink };
     }
 };
+
+
