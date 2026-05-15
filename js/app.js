@@ -1170,25 +1170,55 @@ window.OracleEngine = {
     }
 };
 
-function speak(phraseKey) {
-    if (!('speechSynthesis' in window)) return;
-    window.speechSynthesis.cancel();
+window.TranslationCache = {};
 
-    const lang = window.currentLang || 'fr';
+async function speak(phraseKey) {
+    if (!('speechSynthesis' in window)) return;
+    
+    const baseLang = window.currentLang || 'fr';
     const region = window.OracleEngine.currentRegion;
     
     let text = phraseKey;
-    if (window.OracleEngine.regionalLexicon[lang]) {
-        text = window.OracleEngine.regionalLexicon[lang][region]?.[phraseKey] || 
-               window.OracleEngine.regionalLexicon[lang]['standard']?.[phraseKey] || 
+    if (window.OracleEngine.regionalLexicon && window.OracleEngine.regionalLexicon[baseLang]) {
+        text = window.OracleEngine.regionalLexicon[baseLang][region]?.[phraseKey] || 
+               window.OracleEngine.regionalLexicon[baseLang]['standard']?.[phraseKey] || 
                phraseKey;
     }
 
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.voice = window.OracleEngine.getVoice(lang);
-    utterance.lang = lang;
+    let targetLang = navigator.language.split('-')[0].toLowerCase();
+    let finalMsg = text;
+    
+    if (targetLang !== 'fr') {
+        if (window.TranslationCache[text] && window.TranslationCache[text][targetLang]) {
+            finalMsg = window.TranslationCache[text][targetLang];
+        } else {
+            try {
+                const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=fr&tl=${targetLang}&dt=t&q=${encodeURIComponent(text)}`;
+                const res = await fetch(url);
+                const data = await res.json();
+                if (data && data[0] && data[0][0] && data[0][0][0]) {
+                    finalMsg = data[0].map(item => item[0]).join(''); // Join parts if translated in multiple chunks
+                    if (!window.TranslationCache[text]) window.TranslationCache[text] = {};
+                    window.TranslationCache[text][targetLang] = finalMsg;
+                }
+            } catch (e) {
+                console.warn("Oracle Translation failed, fallback:", e);
+                targetLang = 'fr';
+            }
+        }
+    }
+
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(finalMsg);
+    
+    const voices = window.speechSynthesis.getVoices();
+    let voice = voices.find(v => v.lang.toLowerCase().startsWith(targetLang));
+    if (!voice && targetLang === 'fr') voice = window.OracleEngine.getVoice('fr');
+    if (voice) utterance.voice = voice;
+    
+    utterance.lang = navigator.language;
     utterance.rate = 0.95;
-    utterance.pitch = window.OracleEngine.gender === 'female' ? 1.05 : 0.9;
+    utterance.pitch = (window.OracleEngine && window.OracleEngine.gender === 'female') ? 1.05 : 0.9;
     
     window.speechSynthesis.speak(utterance);
     if ('vibrate' in navigator && navigator.userActivation && navigator.userActivation.hasBeenActive) {
@@ -3290,90 +3320,18 @@ function generateRideCard() {
 window.hasWelcomed = false;
 
 const REGION_MESSAGES = {
-    "bretagne": {
-        "fr": "Bienvenue en Bretagne. Prudence sur les routes potentiellement humides.",
-        "en": "Welcome to Brittany. Watch out for damp roads.",
-        "es": "Bienvenido a Bretaña. Precaución en carreteras mojadas.",
-        "de": "Willkommen in der Bretagne. Vorsicht auf nassen Straßen.",
-        "it": "Benvenuti in Bretagna. Attenzione alle strade umide."
-    },
-    "normandie": {
-        "fr": "Bienvenue en Normandie. Restez vigilant face au vent et aux averses.",
-        "en": "Welcome to Normandy. Be prepared for wind and showers.",
-        "es": "Bienvenido a Normandía. Cuidado con el viento y la lluvia.",
-        "de": "Willkommen in der Normandie. Achten Sie auf Wind und Schauer.",
-        "it": "Benvenuti in Normandia. Attenzione al vento e alle piogge."
-    },
-    "île-de-france": {
-        "fr": "Bienvenue en Île-de-France. Densité de trafic élevée, gardez vos distances.",
-        "en": "Welcome to Île-de-France. High traffic density, keep your distance.",
-        "es": "Bienvenido a Isla de Francia. Alta densidad de tráfico, mantenga su distancia.",
-        "de": "Willkommen in der Île-de-France. Hohe Verkehrsdichte, halten Sie Abstand.",
-        "it": "Benvenuti nell'Île-de-France. Alta densità di traffico, mantieni le distanze."
-    },
-    "provence-alpes-côte d'azur": {
-        "fr": "Bienvenue dans le Sud. La route est dégagée. Pensez à vous hydrater.",
-        "en": "Welcome to the South. The road is clear. Remember to stay hydrated.",
-        "es": "Bienvenido al Sur. La ruta está despejada. Recuerde hidratarse.",
-        "de": "Willkommen im Süden. Die Straße ist frei. Denken Sie daran, ausreichend zu trinken.",
-        "it": "Benvenuti al Sud. La strada è libera. Ricordati di idratarti."
-    },
-    "auvergne-rhône-alpes": {
-        "fr": "Bienvenue en région Rhône-Alpes. Attention aux routes sinueuses en montagne.",
-        "en": "Welcome to the Rhône-Alpes region. Watch out for winding mountain roads.",
-        "es": "Bienvenido a la región de Ródano-Alpes. Cuidado con las carreteras sinuosas de montaña.",
-        "de": "Willkommen in der Region Auvergne-Rhône-Alpes. Vorsicht auf kurvigen Bergstraßen.",
-        "it": "Benvenuti nella regione Rodano-Alpi. Attenzione alle strade tortuose di montagna."
-    },
-    "nouvelle-aquitaine": {
-        "fr": "Bienvenue en Nouvelle-Aquitaine. De belles balades en perspective.",
-        "en": "Welcome to New Aquitaine. Beautiful rides ahead.",
-        "es": "Bienvenido a Nueva Aquitania. Hermosos paseos por delante.",
-        "de": "Willkommen in Nouvelle-Aquitaine. Schöne Fahrten voraus.",
-        "it": "Benvenuti in Nuova Aquitania. Bellissimi giri in arrivo."
-    },
-    "occitanie": {
-        "fr": "Bienvenue en Occitanie. Soleil et belles routes vous attendent.",
-        "en": "Welcome to Occitania. Sun and beautiful roads await you.",
-        "es": "Bienvenido a Occitania. Sol y hermosas carreteras le esperan.",
-        "de": "Willkommen in Okzitanien. Sonne und schöne Straßen erwarten Sie.",
-        "it": "Benvenuti in Occitania. Sole e bellissime strade vi aspettano."
-    },
-    "hauts-de-france": {
-        "fr": "Bienvenue dans les Hauts-de-France. Gardez le contrôle.",
-        "en": "Welcome to Hauts-de-France. Keep control.",
-        "es": "Bienvenido a Hauts-de-France. Mantenga el control.",
-        "de": "Willkommen in Hauts-de-France. Behalten Sie die Kontrolle.",
-        "it": "Benvenuti nell'Alta Francia. Mantieni il controllo."
-    },
-    "grand est": {
-        "fr": "Bienvenue dans le Grand Est. Excellente balade.",
-        "en": "Welcome to the Grand Est. Have an excellent ride.",
-        "es": "Bienvenido al Gran Este. Excelente paseo.",
-        "de": "Willkommen im Grand Est. Ausgezeichnete Fahrt.",
-        "it": "Benvenuti nel Grand Est. Ottimo viaggio."
-    },
-    "bourgogne-franche-comté": {
-        "fr": "Bienvenue en Bourgogne. Conduite souple recommandée.",
-        "en": "Welcome to Burgundy. Smooth driving recommended.",
-        "es": "Bienvenido a Borgoña. Se recomienda conducción suave.",
-        "de": "Willkommen in Burgund. Eine ruhige Fahrweise wird empfohlen.",
-        "it": "Benvenuti in Borgogna. Si consiglia una guida fluida."
-    },
-    "pays de la loire": {
-        "fr": "Bienvenue. L'Oracle est connecté pour votre balade.",
-        "en": "Welcome. The Oracle is connected for your ride.",
-        "es": "Bienvenido. El Oráculo está conectado para su viaje.",
-        "de": "Willkommen. Das Orakel ist für Ihre Fahrt verbunden.",
-        "it": "Benvenuto. L'Oracolo è connesso per il tuo viaggio."
-    },
-    "default": {
-        "fr": "Oracle connecté. Position GPS établie, prêt pour le départ.",
-        "en": "Oracle connected. GPS position established, ready to go.",
-        "es": "Oráculo conectado. Posición GPS establecida, listo para salir.",
-        "de": "Orakel verbunden. GPS-Position ermittelt, abfahrbereit.",
-        "it": "Oracolo connesso. Posizione GPS stabilita, pronti per partire."
-    }
+    "bretagne": "Bienvenue en Bretagne. Prudence sur les routes potentiellement humides.",
+    "normandie": "Bienvenue en Normandie. Restez vigilant face au vent et aux averses.",
+    "île-de-france": "Bienvenue en Île-de-France. Densité de trafic élevée, gardez vos distances.",
+    "provence-alpes-côte d'azur": "Bienvenue dans le Sud. La route est dégagée. Pensez à vous hydrater.",
+    "auvergne-rhône-alpes": "Bienvenue en région Rhône-Alpes. Attention aux routes sinueuses en montagne.",
+    "nouvelle-aquitaine": "Bienvenue en Nouvelle-Aquitaine. De belles balades en perspective.",
+    "occitanie": "Bienvenue en Occitanie. Soleil et belles routes vous attendent.",
+    "hauts-de-france": "Bienvenue dans les Hauts-de-France. Gardez le contrôle.",
+    "grand est": "Bienvenue dans le Grand Est. Excellente balade.",
+    "bourgogne-franche-comté": "Bienvenue en Bourgogne. Conduite souple recommandée.",
+    "pays de la loire": "Bienvenue. L'Oracle est connecté pour votre balade.",
+    "default": "Oracle connecté. Position GPS établie, prêt pour le départ."
 };
 
 window.triggerRegionalWelcome = function(lat, lng) {
@@ -3392,45 +3350,19 @@ window.triggerRegionalWelcome = function(lat, lng) {
                     }
                 }
             }
-            let langCode = navigator.language.split('-')[0].toLowerCase();
-            if (!["fr", "en", "es", "de", "it"].includes(langCode)) langCode = "en";
-            speak(REGION_MESSAGES[regionKey][langCode]);
+            speak(REGION_MESSAGES[regionKey]);
         })
         .catch(err => {
             console.error("Erreur Geocoding Inverse pour Oracle:", err);
-            let langCode = navigator.language.split('-')[0].toLowerCase();
-            if (!["fr", "en", "es", "de", "it"].includes(langCode)) langCode = "en";
-            speak(REGION_MESSAGES["default"][langCode]);
+            speak(REGION_MESSAGES["default"]);
         });
 };
 
 window.getLocalizedRouteMsg = function(dist, etaText, isRodage) {
-    let langCode = navigator.language.split('-')[0].toLowerCase();
-    if (!["fr", "en", "es", "de", "it"].includes(langCode)) langCode = "en";
-
-    const msgs = {
-        "fr": {
-            rodage: `Itinéraire rodage calculé. ${dist} à parcourir. Bonne route avec mon 50 cc et moi.`,
-            normal: `Itinéraire calculé. ${dist}, arrivée prévue à ${etaText}. Bonne route avec mon 50 cc et moi.`
-        },
-        "en": {
-            rodage: `Break-in route calculated. ${dist} to go. Have a good ride with mon 50 cc et moi.`,
-            normal: `Route calculated. ${dist}, estimated arrival at ${etaText}. Have a good ride with mon 50 cc et moi.`
-        },
-        "es": {
-            rodage: `Ruta de rodaje calculada. Faltan ${dist}. Buen viaje con mon 50 cc et moi.`,
-            normal: `Ruta calculada. ${dist}, llegada estimada a las ${etaText}. Buen viaje con mon 50 cc et moi.`
-        },
-        "de": {
-            rodage: `Einfahrroute berechnet. ${dist} zu fahren. Gute Fahrt mit mon 50 cc et moi.`,
-            normal: `Route berechnet. ${dist}, voraussichtliche Ankunft um ${etaText}. Gute Fahrt mit mon 50 cc et moi.`
-        },
-        "it": {
-            rodage: `Percorso di rodaggio calcolato. ${dist} da percorrere. Buon viaggio con mon 50 cc et moi.`,
-            normal: `Percorso calcolato. ${dist}, arrivo previsto alle ${etaText}. Buon viaggio con mon 50 cc et moi.`
-        }
-    };
-    
-    return isRodage ? msgs[langCode].rodage : msgs[langCode].normal;
+    if (isRodage) {
+        return `Itinéraire rodage calculé. ${dist} à parcourir. Bonne route avec mon 50 cc et moi.`;
+    } else {
+        return `Itinéraire calculé. ${dist}, arrivée prévue à ${etaText}. Bonne route avec mon 50 cc et moi.`;
+    }
 };
 
