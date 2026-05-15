@@ -92,13 +92,16 @@ window.Hardware = {
         this.isUltraMode = active;
         if (active) {
             document.body.classList.add('ultra-battery-saver');
-            speak("Mode économie d'énergie Ultra Max activé.");
+            speak("Mode économie d'énergie Ultra Max activé. Passage en navigation hors ligne.");
             this.vibratePattern('warning');
             // Réduire la fréquence des logs Blackbox
             if (window.Blackbox) window.Blackbox.maxEntries = 10;
+            // Forcer la carte hors-ligne (Leaflet) pour économiser la batterie
+            if (window.OfflineMapManager) window.OfflineMapManager.switchToLeaflet();
         } else {
             document.body.classList.remove('ultra-battery-saver');
             if (window.Blackbox) window.Blackbox.maxEntries = 60;
+            if (window.OfflineMapManager) window.OfflineMapManager.switchToGoogleMaps();
         }
     },
 
