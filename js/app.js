@@ -197,8 +197,7 @@ window.initMapController = async function() {
             styles: GOOGLE_MAPS_STYLE,
             disableDefaultUI: true,
             zoomControl: false,
-            gestureHandling: 'greedy',
-            mapId: CONFIG.MAPS.MAP_ID || "DEMO_MAP_ID" // Fallback pour Advanced Markers
+            gestureHandling: 'greedy'
         });
 
         // DirectionsService est déprécié mais on le garde temporairement pour le fallback
@@ -597,22 +596,7 @@ function updatePosition(position) {
     if (typeof userMarker === 'undefined') window.userMarker = null;
     
     if (!window.userMarker) {
-        if (window.googleLibraries && window.googleLibraries.AdvancedMarkerElement) {
-            const iconDiv = document.createElement('div');
-            iconDiv.style.width = '16px';
-            iconDiv.style.height = '16px';
-            iconDiv.style.backgroundColor = '#00d2ff';
-            iconDiv.style.border = '2px solid white';
-            iconDiv.style.borderRadius = '50%';
-            iconDiv.style.boxShadow = '0 0 10px rgba(0, 210, 255, 0.8)';
-
-            window.userMarker = new window.googleLibraries.AdvancedMarkerElement({
-                position: currentPosition,
-                map: map,
-                content: iconDiv,
-                title: "Ma Position"
-            });
-        } else if (typeof google !== 'undefined' && google.maps && google.maps.Marker) {
+        if (typeof google !== 'undefined' && google.maps && google.maps.Marker) {
             window.userMarker = new google.maps.Marker({
                 position: currentPosition,
                 map: map,
@@ -766,13 +750,7 @@ function updatePosition(position) {
         iconContent.innerHTML = `<div style="background-color: #1a1a1a; color: ${color}; font-size: 16px; display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 50%; border: 2px solid white; box-shadow: ${shadow}; transition: all 0.5s ease;"><i class="fa-solid ${vehicleIcon}"></i></div>`;
         
         try {
-            if (google.maps.marker && google.maps.marker.AdvancedMarkerElement) {
-                userMarker = new google.maps.marker.AdvancedMarkerElement({
-                    map: map,
-                    position: currentPosition,
-                    content: iconContent,
-                    title: "Votre Position Certifiée"
-                });
+            if (false) { // AdvancedMarkerElement removed due to mapId styling conflict
             } else {
                 userMarker = new google.maps.Marker({
                     map: map,
@@ -1386,12 +1364,10 @@ async function calculateRouteSansAutoroute(start, end) {
                 currentRoutePolylines.push(p);
             });
 
-            // Marqueur de Destination (Advanced Marker)
-            const destPin = new PinElement({ background: "#ff00ff", borderColor: "#fff", glyphColor: "#fff" });
-            const destMarker = new AdvancedMarkerElement({
-                map,
+            // Marqueur de Destination (Standard Marker fallback)
+            const destMarker = new google.maps.Marker({
+                map: map,
                 position: end,
-                content: destPin.element,
                 title: "Destination"
             });
             currentRouteMarkers.push(destMarker);
