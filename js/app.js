@@ -596,34 +596,7 @@ function updatePosition(position) {
         map.panTo(currentPosition);
     }
 
-    // Mise à jour du marqueur utilisateur (Point Bleu Google Maps)
-    if (map) {
-        if (typeof userMarker === 'undefined') window.userMarker = null;
-        
-        if (!window.userMarker) {
-            if (typeof google !== 'undefined' && google.maps && google.maps.Marker) {
-                window.userMarker = new google.maps.Marker({
-                    position: currentPosition,
-                    map: map,
-                    icon: {
-                        path: google.maps.SymbolPath.CIRCLE,
-                        scale: 8,
-                        fillColor: "#00d2ff",
-                        fillOpacity: 1,
-                        strokeColor: "white",
-                        strokeWeight: 2
-                    },
-                    title: "Ma Position"
-                });
-            }
-        } else {
-            if (window.userMarker.setPosition) {
-                window.userMarker.setPosition(currentPosition);
-            } else {
-                window.userMarker.position = currentPosition;
-            }
-        }
-    }
+
 
     if (window.updatePositionLeaflet) {
         window.updatePositionLeaflet(lat, lng);
@@ -743,61 +716,70 @@ function updatePosition(position) {
     // --- NEW: Parking Mode Security ---
     handleParkingMode(lat, lng);
 
-    // Rendu Map
-    if (!userMarker) {
-        const totalKm = window.session?.totalDistance || 0;
-        const color = totalKm >= 10000 ? '#B9F2FF' : '#cca000'; // DIAMANT SI 10000KM
-        const shadow = totalKm >= 10000 ? '0 0 20px #B9F2FF' : '0 0 15px rgba(204, 160, 0, 0.9)';
+    // Rendu Map (uniquement en ligne)
+    if (map) {
+        if (!userMarker) {
+            const totalKm = window.session?.totalDistance || 0;
+            const color = totalKm >= 10000 ? '#B9F2FF' : '#cca000'; // DIAMANT SI 10000KM
+            const shadow = totalKm >= 10000 ? '0 0 20px #B9F2FF' : '0 0 15px rgba(204, 160, 0, 0.9)';
 
-        // Detection du type de vehicule pour l'icone
-        const vehicleIcon = window.getVehicleIcon(window.session?.brand, window.session?.model);
+            // Detection du type de vehicule pour l'icone
+            const vehicleIcon = window.getVehicleIcon(window.session?.brand, window.session?.model);
 
-        const iconContent = document.createElement("div");
-        iconContent.innerHTML = `<div style="background-color: #1a1a1a; color: ${color}; font-size: 16px; display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 50%; border: 2px solid white; box-shadow: ${shadow}; transition: all 0.5s ease;"><i class="fa-solid ${vehicleIcon}"></i></div>`;
-        
-        try {
-            if (false) { // AdvancedMarkerElement removed due to mapId styling conflict
+            const iconContent = document.createElement("div");
+            iconContent.innerHTML = `<div style="background-color: #1a1a1a; color: ${color}; font-size: 16px; display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 50%; border: 2px solid white; box-shadow: ${shadow}; transition: all 0.5s ease;"><i class="fa-solid ${vehicleIcon}"></i></div>`;
+            
+            try {
+                if (false) { // AdvancedMarkerElement removed due to mapId styling conflict
+                } else {
+                    userMarker = new google.maps.Marker({
+                        map: map,
+                        position: currentPosition,
+                        title: "Votre Position",
+                        icon: { path: google.maps.SymbolPath.CIRCLE, scale: 10, fillColor: color, fillOpacity: 1, strokeColor: 'white', strokeWeight: 2 }
+                    });
+                }
+            } catch(e) { console.error("Marker init fail", e); }
+
+            accuracyCircle = new google.maps.Circle({
+                map: map,
+                center: currentPosition,
+                radius: accuracy / 2,
+                fillColor: "#ffffff",
+                fillOpacity: 0.1,
+                strokeColor: "#ffffff",
+                strokeWeight: 1
+            });
+
+            map.setCenter(currentPosition);
+            map.panBy(0, -100); 
+        } else {
+            const totalKm = window.session?.totalDistance || 0;
+            const color = totalKm >= 10000 ? '#B9F2FF' : '#cca000';
+            
+            if (userMarker.content) {
+                const innerDiv = userMarker.content.querySelector('div');
+                if (innerDiv) {
+                    innerDiv.style.color = color;
+                    innerDiv.style.boxShadow = totalKm >= 10000 ? '0 0 20px #B9F2FF' : '0 0 15px rgba(204, 160, 0, 0.9)';
+                }
+            }
+
+            if (userMarker.setPosition) {
+                userMarker.setPosition(currentPosition);
             } else {
-                userMarker = new google.maps.Marker({
-                    map: map,
-                    position: currentPosition,
-                    title: "Votre Position",
-                    icon: { path: google.maps.SymbolPath.CIRCLE, scale: 10, fillColor: color, fillOpacity: 1, strokeColor: 'white', strokeWeight: 2 }
-                });
+                userMarker.position = currentPosition;
             }
-        } catch(e) { console.error("Marker init fail", e); }
 
-        accuracyCircle = new google.maps.Circle({
-            map: map,
-            center: currentPosition,
-            radius: accuracy / 2,
-            fillColor: "#ffffff",
-            fillOpacity: 0.1,
-            strokeColor: "#ffffff",
-            strokeWeight: 1
-        });
-
-        map.setCenter(currentPosition);
-        map.panBy(0, -100); 
-    } else {
-        const totalKm = window.session?.totalDistance || 0;
-        const color = totalKm >= 10000 ? '#B9F2FF' : '#cca000';
-        
-        if (userMarker.content) {
-            const innerDiv = userMarker.content.querySelector('div');
-            if (innerDiv) {
-                innerDiv.style.color = color;
-                innerDiv.style.boxShadow = totalKm >= 10000 ? '0 0 20px #B9F2FF' : '0 0 15px rgba(204, 160, 0, 0.9)';
+            if (accuracyCircle && accuracyCircle.setCenter) {
+                accuracyCircle.setCenter(currentPosition);
+                accuracyCircle.setRadius(accuracy / 2);
             }
+            
+            // On recentre et on décale pour la visibilité
+            map.panTo(currentPosition);
+            map.panBy(0, -100);
         }
-
-        userMarker.position = currentPosition;
-        accuracyCircle.setCenter(currentPosition);
-        accuracyCircle.setRadius(accuracy / 2);
-        
-        // On recentre et on décale pour la visibilité
-        map.panTo(currentPosition);
-        map.panBy(0, -100);
     }
 
     // Météo Auto
