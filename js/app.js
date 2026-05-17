@@ -88,7 +88,7 @@ history.pushState(null, null, window.location.pathname);
 // escapeHTML est maintenant défini dans auth.js (global)
 
 // --- BOOT ---
-console.log("mon50ccetmoi v50.1.9-GOLD-ULTIMATE : Production Ready.");
+console.log("mon50ccetmoi v60.0.15-GOLD : Production Ready.");
 
 let map;
 let directionsService;
@@ -271,7 +271,7 @@ window.initMapController = async function() {
 window.startApp = function() {
     if (window.appStarted) return;
     window.appStarted = true;
-    console.log("mon50cc Master Controller : Démarrage de la séquence d'initialisation v50.1.9-GOLD-ULTIMATE...");
+    console.log("mon50cc Master Controller : Démarrage de la séquence d'initialisation v60.0.15-GOLD...");
     runCinematicStartup();
     
     checkTrialExpiration();
@@ -330,7 +330,7 @@ window.startApp = function() {
         updateUILabels();
         if (typeof renderCommunityMarkers === "function") renderCommunityMarkers();
         if (typeof simulateLiveFleet === "function") simulateLiveFleet();
-        console.log("mon50cc v50.1.9-GOLD-ULTIMATE : Système prêt.");
+        console.log("mon50cc v60.0.15-GOLD : Système prêt.");
     }, 3500);
 
     // Lancement de la géolocalisation

@@ -26,7 +26,7 @@ window.Telemetry = {
         hud.className = 'telemetry-glass';
         hud.innerHTML = `
             <div class="telemetry-header">
-                <span>SYSTEM_TELEMETRY v50.1.8-GOLD</span>
+                <span>SYSTEM_TELEMETRY v60.0.15-GOLD</span>
                 <button onclick="window.Telemetry.toggle()">[X]</button>
             </div>
             <div id="telemetry-stats" class="telemetry-stats">
