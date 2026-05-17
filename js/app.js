@@ -568,58 +568,60 @@ function updatePosition(position) {
     const oldPos = currentPosition;
     currentPosition = { lat, lng };
 
-    if(!map) return; 
-
     // Premier FIX : log et welcome
-    if (!oldPos && map) {
+    if (!oldPos) {
         console.log("mon50cc GPS : Premier FIX reçu, centrage initial.");
         
-        if (!window.hasWelcomed) {
-            window.hasWelcomed = true;
-            if (typeof triggerRegionalWelcome === 'function') {
-                triggerRegionalWelcome(lat, lng);
+        if (map) {
+            if (!window.hasWelcomed) {
+                window.hasWelcomed = true;
+                if (typeof triggerRegionalWelcome === 'function') {
+                    triggerRegionalWelcome(lat, lng);
+                }
             }
-        }
-        
-        // Si une destination attendait le GPS, on la lance maintenant
-        if (window.pendingDestinationName) {
-            console.log("mon50cc GPS : Lancement de l'itinéraire en attente vers : " + window.pendingDestinationName);
-            const savedName = window.pendingDestinationName;
-            window.pendingDestinationName = null; 
-            document.getElementById('route-search').value = savedName;
-            window.searchDestination();
+            
+            // Si une destination attendait le GPS, on la lance maintenant
+            if (window.pendingDestinationName) {
+                console.log("mon50cc GPS : Lancement de l'itinéraire en attente vers : " + window.pendingDestinationName);
+                const savedName = window.pendingDestinationName;
+                window.pendingDestinationName = null; 
+                document.getElementById('route-search').value = savedName;
+                window.searchDestination();
+            }
         }
     }
 
-    // Suivi continu et fluide (auto-centrage)
+    // Suivi continu et fluide (auto-centrage Google Maps)
     if (map) {
         map.panTo(currentPosition);
     }
 
-    // Mise à jour du marqueur utilisateur (Point Bleu)
-    if (typeof userMarker === 'undefined') window.userMarker = null;
-    
-    if (!window.userMarker) {
-        if (typeof google !== 'undefined' && google.maps && google.maps.Marker) {
-            window.userMarker = new google.maps.Marker({
-                position: currentPosition,
-                map: map,
-                icon: {
-                    path: google.maps.SymbolPath.CIRCLE,
-                    scale: 8,
-                    fillColor: "#00d2ff",
-                    fillOpacity: 1,
-                    strokeColor: "white",
-                    strokeWeight: 2
-                },
-                title: "Ma Position"
-            });
-        }
-    } else {
-        if (window.userMarker.setPosition) {
-            window.userMarker.setPosition(currentPosition);
+    // Mise à jour du marqueur utilisateur (Point Bleu Google Maps)
+    if (map) {
+        if (typeof userMarker === 'undefined') window.userMarker = null;
+        
+        if (!window.userMarker) {
+            if (typeof google !== 'undefined' && google.maps && google.maps.Marker) {
+                window.userMarker = new google.maps.Marker({
+                    position: currentPosition,
+                    map: map,
+                    icon: {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: 8,
+                        fillColor: "#00d2ff",
+                        fillOpacity: 1,
+                        strokeColor: "white",
+                        strokeWeight: 2
+                    },
+                    title: "Ma Position"
+                });
+            }
         } else {
-            window.userMarker.position = currentPosition;
+            if (window.userMarker.setPosition) {
+                window.userMarker.setPosition(currentPosition);
+            } else {
+                window.userMarker.position = currentPosition;
+            }
         }
     }
 
