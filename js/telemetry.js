@@ -65,6 +65,11 @@ window.Telemetry = {
         console.error = function() {
             self.addLog("ERROR", Array.from(arguments).join(" "));
             originalError.apply(console, arguments);
+            
+            // Auto-show HUD if an error occurs so the rider is informed
+            if (!self.isVisible) {
+                self.toggle();
+            }
         };
     },
 
