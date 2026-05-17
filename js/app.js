@@ -485,8 +485,8 @@ function startGeolocation() {
     navigator.geolocation.getCurrentPosition(updatePosition, () => {}, {enableHighAccuracy: false, timeout: 5000, maximumAge: 0});
     const geoOptions = {
         enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0
+        timeout: 5000,
+        maximumAge: 2000
     };
 
     const onError = (err) => {
@@ -570,10 +570,9 @@ function updatePosition(position) {
 
     if(!map) return; 
 
-    // Premier FIX : on centre la carte
+    // Premier FIX : log et welcome
     if (!oldPos && map) {
-        map.setCenter(currentPosition);
-        console.log("mon50cc GPS : Premier FIX reçu, centrage carte.");
+        console.log("mon50cc GPS : Premier FIX reçu, centrage initial.");
         
         if (!window.hasWelcomed) {
             window.hasWelcomed = true;
@@ -590,6 +589,11 @@ function updatePosition(position) {
             document.getElementById('route-search').value = savedName;
             window.searchDestination();
         }
+    }
+
+    // Suivi continu et fluide (auto-centrage)
+    if (map) {
+        map.panTo(currentPosition);
     }
 
     // Mise à jour du marqueur utilisateur (Point Bleu)
