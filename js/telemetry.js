@@ -18,6 +18,14 @@ window.Telemetry = {
         
         // Auto-refresh UI
         setInterval(() => this.updateHUD(), 1000);
+
+        // Auto-hide after initialization for better fluidity
+        setTimeout(() => {
+            this.addLog("SUCCESS", "Connexion établie. Masquage automatique pour plus de fluidité.");
+            setTimeout(() => {
+                if (this.isVisible) this.toggle();
+            }, 2500);
+        }, 1000);
     },
 
     createHUD: function() {
