@@ -50,7 +50,7 @@ window.NeuralSync = {
     },
 
     triggerV2VWave: function() {
-        speak("Pilote CHEZBIGBOO détecté. Salut motard transmis.");
+        speak("Pilote Xavier Le Chanu détecté. Salut motard transmis.");
         Hardware.vibratePattern('warning'); // Double vibration "V"
         
         const halo = document.createElement('div');

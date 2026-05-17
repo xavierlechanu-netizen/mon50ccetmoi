@@ -48,7 +48,9 @@ const I18N = {
         stop: "STOP",
         reroute: "RE-CALCUL",
         arbitre: "L'Arbitre de la Route",
-        arbitre_title: "L'Arbitre de la Route ⚖️"
+        arbitre_title: "L'Arbitre de la Route ⚖️",
+        voturette: "Voturette / VSP",
+        scooter: "Scooter 50cc"
     },
     en: {
         welcome: "Welcome to mon50ccetmoi",
@@ -94,7 +96,9 @@ const I18N = {
         stop: "STOP",
         reroute: "RE-ROUTE",
         arbitre: "Road Referee",
-        arbitre_title: "Road Referee ⚖️"
+        arbitre_title: "Road Referee ⚖️",
+        voturette: "Microcar / VSP",
+        scooter: "50cc Scooter"
     },
     es: {
         welcome: "Bienvenido a mon50ccetmoi",
@@ -315,7 +319,53 @@ const I18N = {
     hu: { welcome: "Üdvözöljük a mon50ccetmoi-ban", loading: "Rendszerek indítása...", riding_mode: "Vezetési mód", garage: "Garázsom", community: "Közösség", safety: "Biztonság", settings: "Beállítások", report_danger: "Veszély jelzése", police: "Rendőrség / Ellenőrzés", accident: "Baleset", hazard: "Veszély / Munkálatok", speed: "SEBESSÉG", distance: "TÁVOLSÁG", altitude: "MAGASSÁG", weather: "IDŐJÁRÁS", fall_detected: "ESÉST ÉSZLELTÜNK!", emergency_alert: "Riasztást küldünk a kapcsolatainak.", cancel: "Mégse", save: "Mentés", logout: "Kijelentkezés", language: "Nyelv", status_riding: "Úton", status_paused: "Szünet", members_online: "Motorosok online", auth_required: "Bejelentkezés szükséges", guest_mode: "Vendég mód", gas: "Benzin", emergency: "Sürgősségi", bank: "ATM", maintenance: "Karbantartás", insurance: "Biztosítás", share: "Megosztás", legal: "Jogi" },
     ro: { welcome: "Bine ați venit la mon50ccetmoi", loading: "Sistemele pornesc...", riding_mode: "Mod Conducere", garage: "Garajul Meu", community: "Comunitate", safety: "Siguranță", settings: "Setări", report_danger: "Raportează Pericol", police: "Poliție / Control", accident: "Accident", hazard: "Pericol / Lucrări", speed: "VITEZĂ", distance: "DISTANȚĂ", altitude: "ALTITUDINE", weather: "VREME", fall_detected: "CĂDERE DETECTATĂ!", emergency_alert: "O alertă va fi trimisă contactelor.", cancel: "Anulează", save: "Salvează", logout: "Deconectare", language: "Limbă", status_riding: "La drum", status_paused: "Pauză", members_online: "Piloți online", auth_required: "Autentificare necesară", guest_mode: "Mod Vizitator", gas: "Benzină", emergency: "Urgență", bank: "Bancomat", maintenance: "Mentenanță", insurance: "Asigurare", share: "Partajează", legal: "Legal" },
     zh: { welcome: "欢迎来到 mon50ccetmoi", loading: "启动车载系统...", riding_mode: "骑行模式", garage: "我的车库", community: "社区", safety: "安全", settings: "设置", report_danger: "报告危险", police: "警察 / 检查站", accident: "事故", hazard: "危险 / 工程", speed: "速度", distance: "距离", altitude: "高度", weather: "天气", fall_detected: "检测到跌倒！", emergency_alert: "警报将发送给您的联系人。", cancel: "取消", save: "保存", logout: "注销", language: "语言", status_riding: "骑行中", status_paused: "已暂停", members_online: "在线骑手", auth_required: "需要登录", guest_mode: "访客模式", gas: "汽油", emergency: "紧急情况", bank: "自动提款机", maintenance: "保养", insurance: "保险", share: "分享", legal: "法律" },
-    ja: { welcome: "mon50ccetmoiへようこそ", loading: "車載システムを起動中...", riding_mode: "ライディングモード", garage: "マイガレージ", community: "コミュニティ", safety: "安全", settings: "設定", report_danger: "危険を報告", police: "警察 / 検問所", accident: "事故", hazard: "危険 / 工事", speed: "速度", distance: "距離", altitude: "高度", weather: "天気", fall_detected: "転倒を検知しました！", emergency_alert: "連絡先にアラートが送信されます。", cancel: "キャンセル", save: "保存", logout: "ログアウト", language: "言語", status_riding: "走行中", status_paused: "一時停止中", members_online: "オンラインライダー", auth_required: "ログインが必要です", guest_mode: "ゲストモード", gas: "ガソリン", emergency: "緊急", bank: "ATM", maintenance: "メンテナンス", insurance: "保険", share: "共有", legal: "法的情報" }
+    ja: { welcome: "mon50ccetmoiへようこそ", loading: "車載システムを起動中...", riding_mode: "ライディングモード", garage: "マイガレージ", community: "コミュニティ", safety: "安全", settings: "設定", report_danger: "報告を危険", police: "警察 / 検問所", accident: "事故", hazard: "危険 / 工事", speed: "速度", distance: "距離", altitude: "高度", weather: "天気", fall_detected: "転倒を検知しました！", emergency_alert: "連絡先にアラートが送信されます。", cancel: "キャンセル", save: "保存", logout: "ログアウト", language: "言語", status_riding: "走行中", status_paused: "一時停止中", members_online: "オンラインライダー", auth_required: "ログインが必要です", guest_mode: "ゲストモード", gas: "ガソリン", emergency: "緊急", bank: "ATM", maintenance: "メンテナンス", insurance: "保険", share: "共有", legal: "法的情報" },
+    hk: {
+        welcome: "歡迎來到 mon50ccetmoi",
+        loading: "啟動車載系統...",
+        riding_mode: "騎行模式",
+        garage: "我的車庫",
+        community: "社區",
+        safety: "安全",
+        settings: "設定",
+        report_danger: "報告危險",
+        police: "警察 / 檢查站",
+        accident: "事故",
+        hazard: "危險 / 工程",
+        speed: "速度",
+        distance: "距離",
+        altitude: "高度",
+        weather: "天氣",
+        fall_detected: "檢測到跌倒！",
+        emergency_alert: "警報將發送給您的聯繫人。",
+        cancel: "取消",
+        save: "保存",
+        logout: "登出",
+        language: "語言",
+        status_riding: "騎行中",
+        status_paused: "已暫停",
+        members_online: "在線騎手",
+        auth_required: "需要登入",
+        guest_mode: "訪客模式",
+        gas: "汽油",
+        emergency: "緊急情況",
+        bank: "自動提款機",
+        maintenance: "保養",
+        insurance: "保險",
+        share: "分享",
+        legal: "法律信息",
+        garage_title: "我的車庫與日誌",
+        pro_space_title: "專業車庫空間",
+        maint_history_title: "電子保養日誌",
+        expert_meca_title: "機械助手 V3",
+        challenges_title: "每兩週挑戰",
+        donate_title: "支持項目",
+        security_title: "安全與守護者",
+        stop: "停止",
+        reroute: "重新規劃",
+        arbitre: "道路裁判",
+        arbitre_title: "道路裁判 ⚖️"
+    }
 };
 
 // --- I18N HELPERS ---

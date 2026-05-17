@@ -12,4 +12,5 @@ Arrivée GPS : [END_LAT], [END_LNG]
 Ce rapport est généré automatiquement par l'application mon50ccetmoi.
 Toute modification manuelle annule la certification.
 Pour toute expertise assurance, contactez : contact@mon50ccetmoi.fr
+Xavier Le Chanu | SIRET 891 912 503 00036 | TVA FR87891912503
 === FIN DU RAPPORT ===

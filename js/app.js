@@ -1,4 +1,4 @@
-﻿// --- CORE NAVIGATION (SAFE ZONE) ---
+// --- CORE NAVIGATION (SAFE ZONE) ---
 window.toggleMenu = function() {
     try {
         const sidebar = document.getElementById('sidebar');
@@ -113,6 +113,15 @@ let perfStartTime = null;
 window.isRodageActive = false;
 window.isGarageVisible = false;
 window.garageStatus = "dispo";
+window.getVehicleIcon = function(brand, model) {
+    const b = (brand || "").toLowerCase();
+    const m = (model || "").toLowerCase();
+    const vspBrands = ["citroën", "citroen", "ligier", "microcar", "aixam", "chatenet", "casalini", "ami"];
+    if (vspBrands.some(brandName => b.includes(brandName)) || m.includes("ami") || b.includes("voturette") || b.includes("vsp")) {
+        return "fa-car";
+    }
+    return "fa-motorcycle";
+};
 
 // --- SECURITY SYSTEMS STATE ---
 let lastMovementTime = Date.now();
@@ -724,8 +733,11 @@ function updatePosition(position) {
         const color = totalKm >= 10000 ? '#B9F2FF' : '#cca000'; // DIAMANT SI 10000KM
         const shadow = totalKm >= 10000 ? '0 0 20px #B9F2FF' : '0 0 15px rgba(204, 160, 0, 0.9)';
 
+        // Detection du type de vehicule pour l'icone
+        const vehicleIcon = window.getVehicleIcon(window.session?.brand, window.session?.model);
+
         const iconContent = document.createElement("div");
-        iconContent.innerHTML = `<div style="background-color: #1a1a1a; color: ${color}; font-size: 16px; display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 50%; border: 2px solid white; box-shadow: ${shadow}; transition: all 0.5s ease;"><i class="fa-solid fa-motorcycle"></i></div>`;
+        iconContent.innerHTML = `<div style="background-color: #1a1a1a; color: ${color}; font-size: 16px; display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 50%; border: 2px solid white; box-shadow: ${shadow}; transition: all 0.5s ease;"><i class="fa-solid ${vehicleIcon}"></i></div>`;
         
         try {
             if (google.maps.marker && google.maps.marker.AdvancedMarkerElement) {
@@ -3676,8 +3688,7 @@ window.showPage = function(page) {
                 generate: "Expertise Assurance", 
                 nodata: "Aucun trajet enregistré.", 
                 footer: "Certifié conforme aux réglementations européennes sur la protection des données." 
-            }
-        };,
+            },
             'en': { 
                 title: "Black Box Insurance", 
                 subtitle: "Multi-Level Digital Expertise", 
@@ -3688,12 +3699,10 @@ window.showPage = function(page) {
                 generate: "Generate Expert Report (Sim)", 
                 nodata: "No ride recorded.", 
                 footer: "Service billed to insurance: 49.99€ to 149.99€ depending on level." 
-            }
-        };,
-            'en': { title: "Black Box Insurance", subtitle: "Digital Expert Report", desc: "In case of an accident, your Black Box automatically records speed, GPS trajectory, and lean angle.<br><br>This certified report is <strong style='color:#2ecc71;'>free for you</strong>. If your insurance company requests an official certified report, they are billed <strong style='color:#f1c40f;'>â‚¬49.90 per case</strong>.", available: "Data available", pts: "GPS points recorded during the last ride.", replay: "Replay Ride", generate: "Generate PDF Report", nodata: "No ride recorded. Start navigation to activate the Black Box.", footer: "Free report for the rider â€” â‚¬49.90/case billed to the insurance company." },
-            'es': { title: "Black Box Seguro", subtitle: "Informe Pericial Digital", desc: "En caso de accidente, tu Black Box registra automÃ¡ticamente la velocidad, trayectoria GPS y Ã¡ngulo de inclinaciÃ³n.<br><br>Este informe certificado es <strong style='color:#2ecc71;'>gratuito para ti</strong>. Si tu compaÃ±Ã­a de seguros solicita un informe oficial certificado, se les factura <strong style='color:#f1c40f;'>49,90 â‚¬ por expediente</strong>.", available: "Datos disponibles", pts: "puntos GPS registrados en el Ãºltimo viaje.", replay: "Repetir Viaje", generate: "Generar Informe PDF", nodata: "NingÃºn viaje registrado. Inicia la navegaciÃ³n para activar la Black Box.", footer: "Informe gratuito para el piloto â€” 49,90 â‚¬/expediente facturados a la compaÃ±Ã­a de seguros." },
-            'it': { title: "Black Box Assicurazione", subtitle: "Rapporto Peritale Digitale", desc: "In caso di incidente, la tua Black Box registra automaticamente velocitÃ , traiettoria GPS e angolo di piega.<br><br>Questo rapporto certificato Ã¨ <strong style='color:#2ecc71;'>gratuito per te</strong>. Se la tua compagnia assicurativa richiede un rapporto certificato ufficiale, il servizio costa loro <strong style='color:#f1c40f;'>49,90 â‚¬ per pratica</strong>.", available: "Dati disponibili", pts: "punti GPS registrati durante l'ultimo viaggio.", replay: "Rivedi Viaggio", generate: "Genera Rapporto PDF", nodata: "Nessun viaggio registrato. Avvia la navigazione per attivare la Black Box.", footer: "Rapporto gratuito per il pilota â€” 49,90 â‚¬/pratica addebitati alla compagnia assicurativa." },
-            'de': { title: "Black Box Versicherung", subtitle: "Digitales Gutachten", desc: "Im Falle eines Unfalls zeichnet Ihre Black Box automatisch Geschwindigkeit, GPS-Route und Neigungswinkel auf.<br><br>Dieser zertifizierte Bericht ist <strong style='color:#2ecc71;'>fÃ¼r Sie kostenlos</strong>. Wenn Ihre Versicherung einen offiziellen zertifizierten Bericht anfordert, werden ihr <strong style='color:#f1c40f;'>49,90 â‚¬ pro Fall</strong> in Rechnung gestellt.", available: "VerfÃ¼gbare Daten", pts: "GPS-Punkte wÃ¤hrend der letzten Fahrt aufgezeichnet.", replay: "Fahrt wiederholen", generate: "PDF-Bericht erstellen", nodata: "Keine Fahrt aufgezeichnet. Starten Sie die Navigation, um die Black Box zu aktivieren.", footer: "Kostenloser Bericht fÃ¼r den Fahrer â€” 49,90 â‚¬/Fall wird der Versicherung in Rechnung gestellt." }
+            },
+            'es': { title: "Black Box Seguro", subtitle: "Informe Pericial Digital", desc: "En caso de accidente, tu Black Box registra automáticamente la velocidad, trayectoria GPS y ángulo de inclinación.<br><br>Este informe certificado es <strong style='color:#2ecc71;'>gratuito para ti</strong>. Si tu compañía de seguros solicita un informe oficial certificado, se les factura <strong style='color:#f1c40f;'>49,90 € por expediente</strong>.", available: "Datos disponibles", pts: "puntos GPS registrados en el último viaje.", replay: "Repetir Viaje", generate: "Generar Informe PDF", nodata: "Ningún viaje registrado. Inicia la navegación para activar la Black Box.", footer: "Informe gratuito para el piloto — 49,90 €/expediente facturados a la compañía de seguros." },
+            'it': { title: "Black Box Assicurazione", subtitle: "Rapporto Peritale Digitale", desc: "In caso de incidente, la tua Black Box registra automaticamente velocità, traiettoria GPS e angolo di piega.<br><br>Questo rapport certifié est <strong style='color:#2ecc71;'>gratuito per te</strong>. Se la tua compagnia assicurativa richiede un rapporto certificato ufficiale, il servizio costa loro <strong style='color:#f1c40f;'>49,90 € per pratica</strong>.", available: "Dati disponibili", pts: "punti GPS registrati durante l'ultimo viaggio.", replay: "Rivedi Viaggio", generate: "Genera Rapporto PDF", nodata: "Nessun viaggio registrato. Avvia la navigazione per attivare la Black Box.", footer: "Rapporto gratuito per il piloto — 49,90 €/pratica addebitati alla compagnia assicurativa." },
+            'de': { title: "Black Box Versicherung", subtitle: "Digitales Gutachten", desc: "Im Falle eines Unfalls zeichnet Ihre Black Box automatisch Geschwindigkeit, GPS-Route und Neigungswinkel auf.<br><br>Dieser zertifizierte Bericht ist <strong style='color:#2ecc71;'>für Sie kostenlos</strong>. Wenn Ihre Versicherung einen offiziellen zertifizierten Bericht anfordert, werden ihr <strong style='color:#f1c40f;'>49,90 € pro Fall</strong> in Rechnung gestellt.", available: "Verfügbare Daten", pts: "GPS-Punkte während der letzten Fahrt aufgezeichnet.", replay: "Fahrt wiederholen", generate: "PDF-Bericht erstellen", nodata: "Keine Fahrt aufgezeichnet. Starten Sie die Navigation, um die Black Box zu aktivieren.", footer: "Kostenloser Bericht für den Fahrer — 49,90 €/Fall wird der Versicherung in Rechnung gestellt." }
         };
         const lang = navigator.language.split('-')[0].toLowerCase();
         const t = window.BlackBoxDict[lang] || window.BlackBoxDict['en'];
@@ -3850,6 +3859,13 @@ window.DisputeAutomation = {
         const secureLink = `https://expertise.mon50ccetmoi.fr/claim/${caseId}`;
         const shareText = `Litige mon50ccetmoi : Voici mon dossier d'expertise certifiée Black Box. Code déverrouillage : ${pilotCode}. Lien d'achat : ${secureLink}`;
         
+        // Simulation pour la démo : Ouvre automatiquement le portail assureur après 2s
+        setTimeout(() => {
+            if (confirm("DEMO : Souhaitez-vous simuler l'accès de l'assureur au portail de paiement ?")) {
+                if (window.InsurancePortal) window.InsurancePortal.showPortal(caseId);
+            }
+        }, 2000);
+
         if (navigator.share) {
             navigator.share({
                 title: 'Dossier Litige mon50ccetmoi',
@@ -3864,7 +3880,7 @@ window.DisputeAutomation = {
         
         return { caseId, pilotCode, secureLink };
     }
-};
+}
 
 
 

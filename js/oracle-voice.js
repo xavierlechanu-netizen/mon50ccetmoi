@@ -24,7 +24,7 @@ class OracleVoice {
         const langMap = {
             'fr': 'fr-FR', 'en': 'en-US', 'es': 'es-ES', 'it': 'it-IT',
             'nl': 'nl-NL', 'pl': 'pl-PL', 'pt': 'pt-PT', 'de': 'de-DE',
-            'zh': 'zh-CN', 'ja': 'ja-JP', 'ro': 'ro-RO'
+            'zh': 'zh-CN', 'ja': 'ja-JP', 'ro': 'ro-RO', 'hk': 'zh-HK'
         };
         this.recognition.lang = langMap[window.currentLang] || 'fr-FR';
 
@@ -77,7 +77,7 @@ class OracleVoice {
             'nl': 'nl-NL', 'pl': 'pl-PL', 'pt': 'pt-PT', 'de': 'de-DE',
             'zh': 'zh-CN', 'ja': 'ja-JP', 'ro': 'ro-RO', 'hu': 'hu-HU',
             'cs': 'cs-CZ', 'el': 'el-GR', 'no': 'no-NO', 'fi': 'fi-FI',
-            'da': 'da-DK', 'sv': 'sv-SE'
+            'da': 'da-DK', 'sv': 'sv-SE', 'hk': 'zh-HK'
         };
         
         if (this.recognition) {
@@ -89,8 +89,9 @@ class OracleVoice {
     }
 
     processCommand(text) {
-        // Trigger principal : "Oracle"
-        if (text.includes("oracle") || text.includes("mon 50") || text.includes("mon50")) {
+        // Trigger principal : "Oracle", "mon 50", "ma voturette", "mon vsp", "ami"
+        if (text.includes("oracle") || text.includes("mon 50") || text.includes("mon50") || text.includes("voturette") || text.includes("vsp") || text.includes("ami")) {
+
             vibrate(100);
             
             if (text.includes("danger") || text.includes("radar") || text.includes("police")) {

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mon50ccetmoi-v50109-GOLD';
+const CACHE_NAME = 'mon50ccetmoi-v60015-GOLD';
 const TILES_CACHE_NAME = 'mon50cc-tiles-v1';
 
 const STATIC_ASSETS = [
@@ -10,7 +10,7 @@ const STATIC_ASSETS = [
 
 // Install : only pre-cache truly static assets (icons, manifest)
 self.addEventListener('install', (event) => {
-  console.log('[ServiceWorker] Installing v50109-GOLD + Offline Maps...');
+  console.log('[ServiceWorker] Installing v60015-GOLD + Offline Maps...');
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(STATIC_ASSETS);

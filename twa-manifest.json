@@ -1,56 +1,46 @@
-﻿{
-    "packageId":  "com.mon50ccetmoi.twa",
-    "host":  "xavierlechanu-netizen.github.io",
-    "name":  "mon 50cc et moi",
-    "launcherName":  "mon 50cc et moi",
-    "display":  "standalone",
-    "themeColor":  "#000000",
-    "themeColorDark":  "#000000",
-    "navigationColor":  "#000000",
-    "navigationColorDark":  "#000000",
-    "navigationDividerColor":  "#000000",
-    "navigationDividerColorDark":  "#000000",
-    "backgroundColor":  "#000000",
-    "enableNotifications":  true,
-    "startUrl":  "/com.mon50ccetmoi.tws/",
-    "iconUrl":  "https://www.gstatic.com/images/branding/product/2x/googleg_96dp.png",
-    "maskableIconUrl":  "https://www.gstatic.com/images/branding/product/2x/googleg_96dp.png",
-    "splashScreenFadeOutDuration":  300,
-    "signingKey":  {
-                       "path":  "./upload-keystore.jks",
-                       "alias":  "upload"
-                   },
-    "appVersionName":  "60.0.12",
-    "appVersionCode":  60012,
-    "shortcuts":  [
-
-                  ],
-    "generatorApp":  "bubblewrap-cli",
-    "webManifestUrl":  "https://xavierlechanu-netizen.github.io/com.mon50ccetmoi.tws/manifest.json",
-    "fallbackType":  "customtabs",
-    "features":  {
-
-                 },
-    "alphaDependencies":  {
-                              "enabled":  false
-                          },
-    "enableSiteSettingsShortcut":  true,
-    "isChromeOSOnly":  false,
-    "isMetaQuest":  false,
-    "minSdkVersion":  21,
-    "orientation":  "portrait",
-    "fingerprints":  [
-
-                     ],
-    "serviceAccountJsonFile":  "mon50ccetmoi-firebase-adminsdk-fbsvc-248403805b.json",
-    "additionalTrustedOrigins":  [
-                                     "https://xavierlechanu-netizen.github.io"
-                                 ],
-    "retainedBundles":  [
-
-                        ],
-    "displayOverride":  [
-
-                        ],
-    "appVersion":  "60.0.5"
+{
+  "packageId": "com.mon50ccetmoi.twa",
+  "host": "xavierlechanu-netizen.github.io",
+  "name": "mon 50cc et moi",
+  "launcherName": "mon 50cc et moi",
+  "display": "standalone",
+  "themeColor": "#000000",
+  "themeColorDark": "#000000",
+  "navigationColor": "#000000",
+  "navigationColorDark": "#000000",
+  "navigationDividerColor": "#000000",
+  "navigationDividerColorDark": "#000000",
+  "backgroundColor": "#000000",
+  "enableNotifications": true,
+  "startUrl": "/com.mon50ccetmoi.tws/",
+  "iconUrl": "https://www.gstatic.com/images/branding/product/2x/googleg_96dp.png",
+  "maskableIconUrl": "https://www.gstatic.com/images/branding/product/2x/googleg_96dp.png",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "./upload-keystore.jks",
+    "alias": "upload"
+  },
+  "appVersionName": "60.0.15",
+  "appVersionCode": 60016,
+  "shortcuts": [],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://xavierlechanu-netizen.github.io/com.mon50ccetmoi.tws/manifest.json",
+  "fallbackType": "customtabs",
+  "features": {},
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "minSdkVersion": 21,
+  "orientation": "portrait",
+  "fingerprints": [],
+  "serviceAccountJsonFile": "mon50ccetmoi-firebase-adminsdk-fbsvc-248403805b.json",
+  "additionalTrustedOrigins": [
+    "https://xavierlechanu-netizen.github.io"
+  ],
+  "retainedBundles": [],
+  "displayOverride": [],
+  "appVersion": "60.0.15"
 }
