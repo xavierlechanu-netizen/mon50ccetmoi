@@ -475,6 +475,23 @@ async function checkLegalConsent() {
     };
 }
 
+function showGpsBanner(msg, code) {
+    let banner = document.getElementById('gps-error-banner');
+    if (!banner) {
+        banner = document.createElement('div');
+        banner.id = 'gps-error-banner';
+        banner.style = "position:fixed; top:120px; left:50%; transform:translateX(-50%); width:90%; background:rgba(220, 38, 38, 0.95); color:white; padding:15px; border-radius:12px; z-index:99999; font-weight:bold; font-size:0.85rem; text-align:center; border:2px solid #ef4444; box-shadow:0 0 20px rgba(220,38,38,0.8); transition: all 0.3s ease;";
+        document.body.appendChild(banner);
+    }
+    banner.innerHTML = `<i class="fa-solid fa-triangle-exclamation" style="margin-right:8px;"></i> [DIAGNOSTIC GPS] : ${msg} <span style="display:block; font-size:0.7rem; color:#fca5a5; margin-top:4px;">(Erreur code: ${code})</span>`;
+    banner.style.display = 'block';
+}
+
+function hideGpsBanner() {
+    const banner = document.getElementById('gps-error-banner');
+    if (banner) banner.style.display = 'none';
+}
+
 function startGeolocation() {
     if (!('geolocation' in navigator)) {
         console.error("mon50cc GPS : Géolocalisation non supportée sur cet appareil.");
@@ -499,6 +516,8 @@ function startGeolocation() {
         // Alerte vocale en cas de problème prolongé
         if (err.code === 1) speak("Attention, le signal GPS est bloqué. Veuillez autoriser la localisation.");
         else if (err.code === 2 || err.code === 3) speak("Signal GPS faible. Recherche en cours...");
+
+        showGpsBanner(msg, err.code);
 
         // Retry with low accuracy after failure
         setTimeout(() => {
@@ -567,6 +586,7 @@ function updatePosition(position) {
 
     const oldPos = currentPosition;
     currentPosition = { lat, lng };
+    hideGpsBanner();
 
     // Premier FIX : log et welcome
     if (!oldPos) {
