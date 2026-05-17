@@ -595,22 +595,48 @@ function updatePosition(position) {
 
     // Mise à jour du marqueur utilisateur (Point Bleu)
     if (typeof userMarker === 'undefined') window.userMarker = null;
-    if (!window.userMarker && google.maps.Marker) {
-        window.userMarker = new google.maps.Marker({
-            position: currentPosition,
-            map: map,
-            icon: {
-                path: google.maps.SymbolPath.CIRCLE,
-                scale: 8,
-                fillColor: "#00d2ff",
-                fillOpacity: 1,
-                strokeColor: "white",
-                strokeWeight: 2
-            },
-            title: "Ma Position"
-        });
-    } else if (window.userMarker) {
-        window.userMarker.setPosition(currentPosition);
+    
+    if (!window.userMarker) {
+        if (window.googleLibraries && window.googleLibraries.AdvancedMarkerElement) {
+            const iconDiv = document.createElement('div');
+            iconDiv.style.width = '16px';
+            iconDiv.style.height = '16px';
+            iconDiv.style.backgroundColor = '#00d2ff';
+            iconDiv.style.border = '2px solid white';
+            iconDiv.style.borderRadius = '50%';
+            iconDiv.style.boxShadow = '0 0 10px rgba(0, 210, 255, 0.8)';
+
+            window.userMarker = new window.googleLibraries.AdvancedMarkerElement({
+                position: currentPosition,
+                map: map,
+                content: iconDiv,
+                title: "Ma Position"
+            });
+        } else if (typeof google !== 'undefined' && google.maps && google.maps.Marker) {
+            window.userMarker = new google.maps.Marker({
+                position: currentPosition,
+                map: map,
+                icon: {
+                    path: google.maps.SymbolPath.CIRCLE,
+                    scale: 8,
+                    fillColor: "#00d2ff",
+                    fillOpacity: 1,
+                    strokeColor: "white",
+                    strokeWeight: 2
+                },
+                title: "Ma Position"
+            });
+        }
+    } else {
+        if (window.userMarker.setPosition) {
+            window.userMarker.setPosition(currentPosition);
+        } else {
+            window.userMarker.position = currentPosition;
+        }
+    }
+
+    if (window.updatePositionLeaflet) {
+        window.updatePositionLeaflet(lat, lng);
     }
 
     if (window.OracleEngine) window.OracleEngine.updateRegion(lat, lng);
