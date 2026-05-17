@@ -506,7 +506,15 @@ function startGeolocation() {
         maximumAge: 2000
     };
 
+    let manualTimeout = setTimeout(() => {
+        if (!currentPosition) {
+            console.warn("GPS: Timeout manuel déclenché, le navigateur bloque silencieusement.");
+            onError({ code: 3, message: "Manual browser hang" });
+        }
+    }, 8000);
+
     const onError = (err) => {
+        clearTimeout(manualTimeout);
         let msg = "Erreur GPS inconnue";
         if (err.code === 1) msg = "Permission GPS refusée. Autorise la localisation dans les réglages.";
         if (err.code === 2) msg = "Position GPS indisponible (signal faible).";
