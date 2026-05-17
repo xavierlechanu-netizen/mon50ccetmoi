@@ -20,13 +20,15 @@
     "path": "./upload-keystore.jks",
     "alias": "upload"
   },
-  "appVersionName": "60.0.15",
-  "appVersionCode": 60016,
+  "appVersionName": "60.0.17",
+  "appVersionCode": 60017,
   "shortcuts": [],
   "generatorApp": "bubblewrap-cli",
   "webManifestUrl": "https://xavierlechanu-netizen.github.io/com.mon50ccetmoi.tws/manifest.json",
   "fallbackType": "customtabs",
-  "features": {},
+  "features": {
+    "location": {}
+  },
   "alphaDependencies": {
     "enabled": false
   },
@@ -42,5 +44,5 @@
   ],
   "retainedBundles": [],
   "displayOverride": [],
-  "appVersion": "60.0.15"
+  "appVersion": "60.0.17"
 }
