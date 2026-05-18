@@ -500,11 +500,12 @@ function hideGpsBanner() {
 
 // Bouton "Réparer" : explique comment ré-autoriser la localisation dans Chrome Android
 window.repairGps = function() {
+    const appUrl = 'xavierlechanu-netizen.github.io';
     const instructions = [
         "📱 Sur Android Chrome :",
         "1. Appuie sur les 3 points ⋮ en haut à droite",
         "2. Paramètres → Paramètres du site",
-        "3. Localisation → Cherche 'mon50ccetmoi.fr'",
+        "3. Localisation → Cherche '" + appUrl + "'",
         "4. Passe de 'Bloquer' à 'Autoriser'",
         "5. Recharge l'application"
     ].join("\n");
