@@ -480,10 +480,16 @@ function showGpsBanner(msg, code) {
     if (!banner) {
         banner = document.createElement('div');
         banner.id = 'gps-error-banner';
-        banner.style = "position:fixed; top:120px; left:50%; transform:translateX(-50%); width:90%; background:rgba(220, 38, 38, 0.95); color:white; padding:15px; border-radius:12px; z-index:99999; font-weight:bold; font-size:0.85rem; text-align:center; border:2px solid #ef4444; box-shadow:0 0 20px rgba(220,38,38,0.8); transition: all 0.3s ease;";
+        banner.style = "position:fixed; top:120px; left:50%; transform:translateX(-50%); width:90%; background:rgba(180, 20, 20, 0.97); color:white; padding:15px; border-radius:12px; z-index:99999; font-size:0.85rem; text-align:center; border:2px solid #ef4444; box-shadow:0 0 25px rgba(220,38,38,0.9); transition: all 0.3s ease;";
         document.body.appendChild(banner);
     }
-    banner.innerHTML = `<i class="fa-solid fa-triangle-exclamation" style="margin-right:8px;"></i> [DIAGNOSTIC GPS] : ${msg} <span style="display:block; font-size:0.7rem; color:#fca5a5; margin-top:4px;">(Erreur code: ${code})</span>`;
+    
+    // Bouton Réparer uniquement si c'est une permission refusée
+    const repairBtn = code === 1
+        ? `<button onclick="window.repairGps()" style="margin-top:10px; padding:8px 20px; background:#ffb703; color:#000; border:none; border-radius:20px; font-weight:bold; font-size:0.85rem; cursor:pointer;">🔧 Réparer le GPS</button>`
+        : `<button onclick="window.retryGps()" style="margin-top:10px; padding:8px 20px; background:#ffb703; color:#000; border:none; border-radius:20px; font-weight:bold; font-size:0.85rem; cursor:pointer;">🔄 Réessayer</button>`;
+    
+    banner.innerHTML = `<div style="font-weight:bold; margin-bottom:4px;"><i class="fa-solid fa-triangle-exclamation" style="margin-right:6px;"></i>GPS : ${msg}</div><div style="font-size:0.72rem; color:#fca5a5;">(Code erreur: ${code})</div>${repairBtn}`;
     banner.style.display = 'block';
 }
 
@@ -492,49 +498,122 @@ function hideGpsBanner() {
     if (banner) banner.style.display = 'none';
 }
 
-function startGeolocation() {
+// Bouton "Réparer" : explique comment ré-autoriser la localisation dans Chrome Android
+window.repairGps = function() {
+    const instructions = [
+        "📱 Sur Android Chrome :",
+        "1. Appuie sur les 3 points ⋮ en haut à droite",
+        "2. Paramètres → Paramètres du site",
+        "3. Localisation → Cherche 'mon50ccetmoi.fr'",
+        "4. Passe de 'Bloquer' à 'Autoriser'",
+        "5. Recharge l'application"
+    ].join("\n");
+    alert(instructions);
+};
+
+// Bouton "Réessayer" : relance la géolocalisation
+window.retryGps = function() {
+    hideGpsBanner();
+    fallbackWatchId = null; // reset pour permettre un nouveau fallback
+    startGeolocation();
+    speak("Nouvelle tentative de localisation GPS.");
+};
+
+let gpsWatchId = null;
+let fallbackWatchId = null;
+
+async function startGeolocation() {
     if (!('geolocation' in navigator)) {
         console.error("mon50cc GPS : Géolocalisation non supportée sur cet appareil.");
+        showGpsBanner("Géolocalisation non supportée par ce navigateur.", 0);
         return;
     }
 
-    // Warm-up
-    navigator.geolocation.getCurrentPosition(updatePosition, () => {}, {enableHighAccuracy: false, timeout: 5000, maximumAge: 0});
+    // ÉTAPE 1 : Vérifier la permission avant tout appel GPS (évite le blocage silencieux)
+    if (navigator.permissions) {
+        try {
+            const perm = await navigator.permissions.query({ name: 'geolocation' });
+            console.log("mon50cc GPS : Permission state =", perm.state);
+
+            if (perm.state === 'denied') {
+                // Permission définitivement refusée, on ne peut rien faire sans action utilisateur
+                console.error("mon50cc GPS : Permission REFUSÉE par le navigateur.");
+                speak("Le GPS est bloqué. Vérifiez les permissions de l'application.");
+                showGpsBanner("Permission refusée dans Chrome. Appuyez sur 'Réparer' pour activer.", 1);
+                return;
+            }
+
+            // Si la permission change plus tard (ex: l'utilisateur l'accorde manuellement)
+            perm.onchange = () => {
+                if (perm.state === 'granted') {
+                    hideGpsBanner();
+                    window.retryGps();
+                }
+            };
+        } catch(e) {
+            console.warn("mon50cc GPS : API Permissions non disponible, tentative directe.", e);
+        }
+    }
+
+    // ÉTAPE 2 : Warm-up réseau — accepte une position vieille de 5 minutes max
+    // Cela permet de trouver une position approximative immédiatement via WiFi/4G
+    // sans attendre les satellites (clé pour une utilisation en intérieur).
+    console.log("mon50cc GPS : Tentative warm-up localisation réseau...");
+    navigator.geolocation.getCurrentPosition(
+        (pos) => {
+            console.log(`mon50cc GPS : ✅ Position réseau trouvée (précision: ${pos.coords.accuracy.toFixed(0)}m)`);
+            updatePosition(pos);
+            hideGpsBanner();
+        }, 
+        (err) => console.warn("mon50cc GPS : Warm-up réseau échoué", err.code, err.message), 
+        {enableHighAccuracy: false, timeout: 10000, maximumAge: 300000} // 5 min de cache OK
+    );
+
+    // ÉTAPE 3 : Surveillance haute précision (satellites) en arrière-plan
     const geoOptions = {
         enableHighAccuracy: true,
-        timeout: 5000,
-        maximumAge: 2000
+        timeout: 20000, // 20s pour laisser le temps aux satellites
+        maximumAge: 5000
     };
-
-    let manualTimeout = setTimeout(() => {
-        if (!currentPosition) {
-            console.warn("GPS: Timeout manuel déclenché, le navigateur bloque silencieusement.");
-            onError({ code: 3, message: "Manual browser hang" });
-        }
-    }, 8000);
 
     const onError = (err) => {
-        clearTimeout(manualTimeout);
         let msg = "Erreur GPS inconnue";
-        if (err.code === 1) msg = "Permission GPS refusée. Autorise la localisation dans les réglages.";
-        if (err.code === 2) msg = "Position GPS indisponible (signal faible).";
-        if (err.code === 3) msg = "Timeout GPS : aucune position reçue.";
-        console.error("mon50cc GPS : " + msg, err);
+        if (err.code === 1) msg = "Permission GPS refusée. Appuyez sur 'Réparer'.";
+        if (err.code === 2) msg = "Signal GPS faible (intérieur ?). Position réseau utilisée.";
+        if (err.code === 3) msg = "Recherche GPS en cours... (sortez à l'extérieur)";
+        console.error("mon50cc GPS : " + msg, "code:", err.code);
         
-        // Alerte vocale en cas de problème prolongé
-        if (err.code === 1) speak("Attention, le signal GPS est bloqué. Veuillez autoriser la localisation.");
-        else if (err.code === 2 || err.code === 3) speak("Signal GPS faible. Recherche en cours...");
+        if (err.code === 1) {
+            speak("Le GPS est bloqué. Vérifiez les permissions.");
+            showGpsBanner(msg, err.code);
+        } else if (!currentPosition) {
+            // Pas encore de position du tout — on affiche un avertissement discret
+            if (err.code === 2 || err.code === 3) speak("Recherche du signal GPS...");
+            showGpsBanner(msg, err.code);
+        } else {
+            // On a déjà une position réseau : on masque l'erreur, pas de panique
+            console.warn("GPS haute précision: perte satellite, position réseau disponible.");
+            hideGpsBanner();
+        }
 
-        showGpsBanner(msg, err.code);
-
-        // Retry with low accuracy after failure
-        setTimeout(() => {
-            navigator.geolocation.watchPosition(updatePosition, (e) => console.warn("GPS low-acc fallback:", e), { enableHighAccuracy: false, timeout: 10000, maximumAge: 10000 });
-        }, 3000);
+        // Fallback basse précision si vraiment aucune position et pas déjà actif
+        if (fallbackWatchId === null && !currentPosition && err.code !== 1) {
+            console.log("mon50cc GPS : Activation du fallback basse précision...");
+            fallbackWatchId = navigator.geolocation.watchPosition(
+                (pos) => {
+                    console.log("GPS: ✅ Position basse précision trouvée");
+                    updatePosition(pos);
+                    hideGpsBanner();
+                },
+                (e) => console.warn("GPS low-acc fallback failed:", e.code), 
+                { enableHighAccuracy: false, timeout: 20000, maximumAge: 30000 }
+            );
+        }
     };
 
-    navigator.geolocation.watchPosition(updatePosition, onError, geoOptions);
-    console.log("mon50cc GPS : Surveillance haute précision démarrée.");
+    if (gpsWatchId !== null) navigator.geolocation.clearWatch(gpsWatchId);
+    gpsWatchId = navigator.geolocation.watchPosition(updatePosition, onError, geoOptions);
+    console.log("mon50cc GPS : Surveillance haute précision démarrée (watch ID:", gpsWatchId, ").");
 }
 
 // Remplacement du démarrage automatique par la vérification légale
