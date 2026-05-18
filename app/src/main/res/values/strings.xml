@@ -18,7 +18,7 @@
   
     <string-array name="additional_trusted_origins">
     
-      <item>https://https://xavierlechanu-netizen.github.io</item>
+      <item>https://mon50ccetmoi.com</item>
     
     </string-array>
   
@@ -40,17 +40,8 @@
         \"relation\": [\"delegate_permission/common.handle_all_urls\"],
         \"target\": {
             \"namespace\": \"web\",
-            \"site\": \"https://xavierlechanu-netizen.github.io\"
+            \"site\": \"https://mon50ccetmoi.com\"
         }
     }]
-    
-      ,[{
-          \"relation\": [\"delegate_permission/common.handle_all_urls\"],
-          \"target\": {
-              \"namespace\": \"web\",
-              \"site\": \"https://https://xavierlechanu-netizen.github.io\"
-          }
-      }]        
-    
   </string>  
 </resources>
