@@ -598,7 +598,7 @@ async function startGeolocation() {
         }
 
         // Fallback basse précision si vraiment aucune position et pas déjà actif
-        if (fallbackWatchId === null && !currentPosition && err.code !== 1) {
+        if (fallbackWatchId === null && err.code !== 1) {
             console.log("mon50cc GPS : Activation du fallback basse précision...");
             fallbackWatchId = navigator.geolocation.watchPosition(
                 (pos) => {
@@ -667,6 +667,12 @@ function getSmoothedSpeed(rawSpeed) {
 }
 
 function updatePosition(position) {
+    // Arrêt du fallback basse précision si on récupère un signal GPS haute précision décent (< 30m)
+    if (position.coords.accuracy !== null && position.coords.accuracy < 30 && fallbackWatchId !== null) {
+        console.log("mon50cc GPS : Signal haute précision retrouvé, arrêt du fallback.");
+        navigator.geolocation.clearWatch(fallbackWatchId);
+        fallbackWatchId = null;
+    }
     const lat = position.coords.latitude;
     const lng = position.coords.longitude;
     const speed = position.coords.speed;
