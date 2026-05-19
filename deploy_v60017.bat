@@ -5,6 +5,7 @@ set PATH=%JAVA_HOME%\bin;%PATH%
 set BUBBLEWRAP_KEYSTORE_PASSWORD=Mon50cc-2026!
 set BUBBLEWRAP_KEY_PASSWORD=Mon50cc-2026!
 set GRADLE_OPTS=-Xmx384m -XX:MaxMetaspaceSize=128m
+set _JAVA_OPTIONS=-Xmx512m
 
 echo [INFO] Demarrage de la compilation v60.0.17...
 cmd /c bubblewrap build

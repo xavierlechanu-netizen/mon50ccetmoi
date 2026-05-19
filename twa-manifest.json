@@ -20,8 +20,8 @@
     "path": "./upload-keystore.jks",
     "alias": "upload"
   },
-  "appVersionName": "60.0.17",
-  "appVersionCode": 60017,
+  "appVersionName": "60.0.18",
+  "appVersionCode": 60020,
   "shortcuts": [],
   "generatorApp": "bubblewrap-cli",
   "webManifestUrl": "https://mon50ccetmoi.com/manifest.json",
@@ -44,5 +44,5 @@
   ],
   "retainedBundles": [],
   "displayOverride": [],
-  "appVersion": "60.0.17"
+  "appVersion": "60.0.18"
 }

@@ -15,12 +15,18 @@ service cloud.firestore {
       return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
 
+    function getUsername() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.username;
+    }
+
     // --- RÈGLES PAR COLLECTION ---
 
-    // Profils Utilisateurs : Seul l'utilisateur peut voir/modifier son profil
+    // Profils Utilisateurs : Seul l'utilisateur ou l'admin peut modifier son profil, tout le monde peut voir
     match /users/{userId} {
-      allow read, write: if isOwner(userId);
+      allow read: if true;
       allow create: if isSignedIn();
+      allow update: if isOwner(userId) || isAdmin();
+      allow delete: if isAdmin();
     }
 
     // Blackbox : Stockage ultra-privé. Lecture réservée au proprio ou expert vérifié
@@ -41,13 +47,11 @@ service cloud.firestore {
       allow create, update: if isSignedIn() && isOwner(request.resource.data.userId);
     }
 
-    // Alertes Communautaires (Hazards) : Validation des types
+    // Alertes Communautaires (Hazards)
     match /hazards/{hazardId} {
       allow read: if true;
-      allow create: if isSignedIn() 
-                    && request.resource.data.pos.lat is number 
-                    && request.resource.data.pos.lng is number;
-      allow delete: if isAdmin() || isOwner(resource.data.userId);
+      allow create: if isSignedIn(); // Retrait du contrôle pos.lat/lng en clair car chiffré sous payload
+      allow delete: if isAdmin() || (isSignedIn() && getUsername() == resource.data.author);
     }
 
     // Sessions de Balades
@@ -55,6 +59,72 @@ service cloud.firestore {
       allow read: if true;
       allow create: if isSignedIn();
       allow update, delete: if isOwner(resource.data.userId);
+    }
+
+    // Partage de position en temps réel (Presence)
+    match /presence/{username} {
+      allow read: if true;
+      allow write: if isSignedIn() && getUsername() == username;
+    }
+
+    // Humeurs / Ticker Social (Moods)
+    match /moods/{moodId} {
+      allow read: if true;
+      allow create: if isSignedIn() && getUsername() == request.resource.data.username;
+      allow delete: if isAdmin();
+    }
+
+    // SOS / Alertes d'urgence (Emergency Alerts)
+    match /emergency_alerts/{alertId} {
+      allow read: if true;
+      allow create: if isSignedIn() && isOwner(request.resource.data.userId);
+    }
+
+    // Signalement d'abus (Reports Abuse)
+    match /reports_abuse/{reportId} {
+      allow read, write: if isSignedIn();
+    }
+
+    // Stations services signalées/blacklistées (Blacklist Stations)
+    match /blacklist_stations/{stationId} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+
+    // Dossiers de plaintes officiels (Complaints Official)
+    match /complaints_official/{complaintId} {
+      allow read: if isAdmin();
+      allow write: if isSignedIn();
+    }
+
+    // Alertes d'administration (Admin Alerts)
+    match /admin_alerts/{alertId} {
+      allow read: if isAdmin();
+      allow write: if isSignedIn();
+    }
+
+    // Évaluations des garages (Garage Evaluations)
+    match /garage_evaluations/{garageId} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+
+    // Roadbooks partagés (Community Roadbooks)
+    match /community_roadbooks/{roadbookId} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+
+    // Blocage d'IP (Banned IPs)
+    match /banned_ips/{ip} {
+      allow read: if isAdmin();
+      allow write: if isSignedIn();
+    }
+
+    // Logs de modération (Mod Logs)
+    match /mod_logs/{logId} {
+      allow read: if isAdmin();
+      allow write: if isSignedIn();
     }
   }
 }
