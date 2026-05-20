@@ -90,33 +90,86 @@ class OracleVoice {
 
     processCommand(text) {
         // Trigger principal : "Oracle", "mon 50", "ma voturette", "mon vsp", "ami"
-        if (text.includes("oracle") || text.includes("mon 50") || text.includes("mon50") || text.includes("voturette") || text.includes("vsp") || text.includes("ami")) {
+        const triggered = text.includes("oracle") || text.includes("mon 50") ||
+            text.includes("mon50") || text.includes("voturette") ||
+            text.includes("vsp") || text.includes("ami") || text.includes("allô");
 
-            vibrate(100);
-            
-            if (text.includes("danger") || text.includes("radar") || text.includes("police")) {
-                if (typeof window.reportHazard === "function") {
-                    window.reportHazard('radar', "Signalement Vocal");
-                    speak("Danger signalé à la communauté.");
-                }
-            } 
-            else if (text.includes("vitesse")) {
-                const speed = document.getElementById('speed').textContent;
-                speak(`Vitesse actuelle : ${speed} km/h.`);
-            }
-            else if (text.includes("menu")) {
-                window.toggleMenu();
-                speak("Ouverture du menu.");
-            }
-            else if (text.includes("kilométrage") || text.includes("distance")) {
-                const km = window.session?.totalDistance || 0;
-                speak(`Vous avez parcouru ${km.toFixed(1)} kilomètres au total.`);
-            }
-            else if (text.includes("aide")) {
-                speak("Commandes disponibles : Danger, Vitesse, Menu, Kilométrage.");
+        if (!triggered) return;
+
+        vibrate(100);
+
+        // ── Dangers & Alertes ──────────────────────────────────────
+        if (text.includes("danger") || text.includes("radar") || text.includes("police") || text.includes("contrôle")) {
+            if (typeof window.reportHazard === "function") {
+                window.reportHazard('radar', "Signalement Vocal");
+                speak("Danger signalé à la communauté. Restez prudent.");
+            } else {
+                speak("Je n'ai pas pu signaler le danger. La carte n'est pas encore chargée.");
             }
         }
+        // ── Vitesse ────────────────────────────────────────────────
+        else if (text.includes("vitesse") || text.includes("vite") || text.includes("rapide")) {
+            const speed = document.getElementById('speed')?.textContent || '0';
+            speak(`Vitesse actuelle : ${speed} km/h.`);
+        }
+        // ── Navigation / Aller ────────────────────────────────────
+        else if (text.includes("emmène") || text.includes("amène") || text.includes("aller à") || text.includes("navigue")) {
+            const dest = text.replace(/.*(?:emmène|amène|aller à|navigue(?:r)? vers?)\s+/i, '').trim();
+            if (dest) {
+                const input = document.getElementById('route-search');
+                if (input) {
+                    input.value = dest;
+                    if (typeof window.searchDestination === 'function') window.searchDestination();
+                    speak(`Calcul de l'itinéraire vers ${dest}.`);
+                }
+            }
+        }
+        // ── Menu ───────────────────────────────────────────────────
+        else if (text.includes("menu") || text.includes("ouvre") || text.includes("panneau")) {
+            window.toggleMenu();
+            speak("Ouverture du menu.");
+        }
+        // ── Kilométrage ────────────────────────────────────────────
+        else if (text.includes("kilométrage") || text.includes("distance") || text.includes("combien") || text.includes("parcouru")) {
+            const km = window.session?.totalDistance || 0;
+            speak(`Vous avez parcouru ${km.toFixed(1)} kilomètres au total.`);
+        }
+        // ── Localisation / Position ────────────────────────────────
+        else if (text.includes("où") || text.includes("position") || text.includes("localisation") || text.includes("suis-je")) {
+            const pos = window.currentPosition;
+            if (pos) {
+                speak(`Vous êtes à latitude ${pos.lat.toFixed(4)}, longitude ${pos.lng.toFixed(4)}.`);
+            } else {
+                speak("Je n'ai pas encore de signal GPS.");
+            }
+        }
+        // ── Météo ──────────────────────────────────────────────────
+        else if (text.includes("météo") || text.includes("temps") || text.includes("pluie")) {
+            const temp = document.getElementById('weather-hud')?.textContent || '--';
+            speak(`La température affichée est de ${temp}.`);
+        }
+        // ── SOS / Urgence ──────────────────────────────────────────
+        else if (text.includes("sos") || text.includes("secours") || text.includes("urgence") || text.includes("accident")) {
+            speak("Activation du protocole SOS. Restez immobile.");
+            if (window.SOSEmergency) window.SOSEmergency.trigger();
+        }
+        // ── Aide ───────────────────────────────────────────────────
+        else if (text.includes("aide") || text.includes("commande") || text.includes("que peux") || text.includes("que sais")) {
+            speak("Je peux : Signaler un danger, Donner votre vitesse, Naviguer vers une destination, Ouvrir le menu, Donner votre kilométrage, et activer le SOS. Dites Oracle suivi de votre commande.");
+        }
+        // ── Salutation / Conversation ──────────────────────────────
+        else if (text.includes("bonjour") || text.includes("salut") || text.includes("coucou") || text.includes("comment")) {
+            const hour = new Date().getHours();
+            const greet = hour < 12 ? "Bonjour" : hour < 18 ? "Bon après-midi" : "Bonsoir";
+            const name = window.session?.username ? `, ${window.session.username}` : "";
+            speak(`${greet}${name}. Je suis Oracle, votre copilote intelligent. Dites oracle aide pour connaître mes commandes.`);
+        }
+        // ── Réponse par défaut ─────────────────────────────────────
+        else {
+            speak("Je vous écoute. Dites Oracle aide pour connaître mes commandes disponibles.");
+        }
     }
+
 }
 
 window.OracleVoice = new OracleVoice();

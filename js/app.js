@@ -710,13 +710,17 @@ function updatePosition(position) {
         map.panTo(currentPosition);
     }
 
-
+    // Tracé GPS de la balade (cyberline cyan)
+    if (typeof window.addTracePoint === 'function') {
+        window.addTracePoint(lat, lng);
+    }
 
     if (window.updatePositionLeaflet) {
         window.updatePositionLeaflet(lat, lng);
     }
 
     if (window.OracleEngine) window.OracleEngine.updateRegion(lat, lng);
+
 
     // Update Telemetry HUD if active
     if (window.Telemetry) {
@@ -3945,10 +3949,44 @@ window.BlackBoxInsurance = {
 
 
 
+// =============================================
 
+// ─── TRACÉ GPS DE LA BALADE ──────────────────────────────────────────────────
+let rideTracePolyline = null;
+let rideTraceCoords = [];
 
+/**
+ * Démarre ou continue le tracé de la balade sur la carte Google Maps.
+ * Appelé automatiquement à chaque mise à jour GPS si la carte est active.
+ */
+window.addTracePoint = function(lat, lng) {
+    if (!map) return;
+    rideTraceCoords.push({ lat, lng });
 
+    if (!rideTracePolyline) {
+        rideTracePolyline = new google.maps.Polyline({
+            path: rideTraceCoords,
+            geodesic: true,
+            strokeColor: '#00d2ff',
+            strokeOpacity: 0.85,
+            strokeWeight: 4,
+            map: map
+        });
+    } else {
+        rideTracePolyline.setPath(rideTraceCoords);
+    }
+};
 
+/**
+ * Efface le tracé de la balade en cours.
+ */
+window.clearRideTrace = function() {
+    if (rideTracePolyline) {
+        rideTracePolyline.setMap(null);
+        rideTracePolyline = null;
+    }
+    rideTraceCoords = [];
+};
 
 // ============================================================
 // AUTOMATISATION DES LITIGES ET PAIEMENTS B2B
@@ -4004,5 +4042,28 @@ window.hideVault = function() {
     if(searchContainer) searchContainer.classList.remove('hidden');
     if(hud) hud.style.display = 'block';
 }
+
+// DEBUG: Sentinel Error Reporter Overlay
+(function() {
+    const debugDiv = document.createElement('div');
+    debugDiv.id = 'sentinel-debug-overlay';
+    debugDiv.style.cssText = 'position:fixed; bottom:50px; left:10px; right:10px; background:rgba(0,0,0,0.9); color:#ff4d4d; border:2px solid #ff4d4d; padding:10px; font-family:monospace; font-size:11px; z-index:999999; max-height:200px; overflow-y:auto; border-radius:8px; pointer-events:auto;';
+    debugDiv.innerHTML = '<b>[SENTINEL DEBUG ACTIVE] Waiting for logs...</b>';
+    document.body.appendChild(debugDiv);
+
+    setInterval(() => {
+        const errors = window.Sentinel ? window.Sentinel.errorLog : [];
+        if (errors.length > 0) {
+            let html = `<b>[SENTINEL BUG REPORT - ${errors.length} ERRORS]</b><br>`;
+            errors.forEach((err, idx) => {
+                html += `${idx + 1}: ${err.type} | Msg: ${err.detail?.msg || err.detail || 'N/A'}<br>File: ${err.detail?.url || 'N/A'} (Line: ${err.detail?.line || 'N/A'})<br><br>`;
+            });
+            debugDiv.innerHTML = html;
+            console.log("SENTINEL_LOG_DUMP:", JSON.stringify(errors));
+        } else {
+            debugDiv.innerHTML = '<b>[SENTINEL DEBUG] No errors detected yet.</b>';
+        }
+    }, 1000);
+})();
 
 
