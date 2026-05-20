@@ -185,10 +185,17 @@ window.initMapController = async function() {
         // Modern Library Imports
         const { Map } = await google.maps.importLibrary("maps");
         const { AdvancedMarkerElement, PinElement } = await google.maps.importLibrary("marker");
-        const { Route } = await google.maps.importLibrary("routes");
-        const { Autocomplete } = await google.maps.importLibrary("places");
 
-        window.googleLibraries = { Map, AdvancedMarkerElement, PinElement, Route, Autocomplete };
+        // Autocomplete (optionnel — peut être indisponible selon le plan API)
+        let Autocomplete = null;
+        try {
+            const placesLib = await google.maps.importLibrary("places");
+            Autocomplete = placesLib.Autocomplete;
+        } catch(e) {
+            console.warn("mon50cc Maps : Autocomplete non disponible (plan API).", e.message);
+        }
+
+        window.googleLibraries = { Map, AdvancedMarkerElement, PinElement, Autocomplete };
 
         console.log("mon50cc Maps : Création de l'objet Map...");
         map = new Map(mapElement, {
@@ -213,18 +220,18 @@ window.initMapController = async function() {
 
         // Autocomplete pour le Départ (Optionnel)
         const startInput = document.getElementById('route-start');
-        if (startInput) {
+        if (startInput && Autocomplete) {
             new Autocomplete(startInput);
         }
 
         const input = document.getElementById('route-search');
-        if (input) {
+        if (input && Autocomplete) {
             const autocomplete = new Autocomplete(input);
             autocomplete.bindTo('bounds', map);
             autocomplete.addListener('place_changed', () => {
                 const place = autocomplete.getPlace();
                 if (!place.geometry) {
-                    window.searchDestination(); // Fallback si pas de sélection précise
+                    window.searchDestination();
                     return;
                 }
                 if (place.geometry.viewport) {
@@ -234,7 +241,6 @@ window.initMapController = async function() {
                     map.setZoom(17);
                 }
 
-                // Vérification cruciale de currentPosition avant calcul
                 if (!currentPosition) {
                     speak("Recherche de votre position GPS. L'itinéraire démarrera automatiquement dès que possible.");
                     window.pendingDestinationName = input.value;
