@@ -1,12 +1,18 @@
 /**
  * PORTAIL ASSURANCE mon50ccetmoi
- * Gestion des paiements et accès aux rapports d'expertise.
+ * Paiements via Revolut Merchant API (SDK RevolutCheckout embarqué)
+ * Flow : client → Firebase Function (création ordre) → Revolut → webhook → Firestore
  */
 window.InsurancePortal = {
-    config: {
-        stripe_public_key: "sup_pk_Jz8vwY0cBIDOA1TbquCYDoUh6s3udRaey", // Clé publique
-        // ATTENTION : Ne JAMAIS mettre de clé privée (secret key) ici.
-        // Les clés privées doivent être gérées côté serveur (ex: Firebase Functions).
+    // Clé publique Merchant (config.js) — utilisée côté client uniquement
+    get revolutPublicKey() {
+        return CONFIG?.REVOLUT?.PUBLIC_KEY || '';
+    },
+
+    // URL de la Firebase Cloud Function (region europe-west1)
+    get functionBaseUrl() {
+        const projectId = CONFIG?.FIREBASE?.projectId || 'mon50ccetmoi';
+        return `https://europe-west1-${projectId}.cloudfunctions.net`;
     },
 
     balance: 500.00, // Option 2: Portefeuille virtuel (Acompte)
@@ -14,7 +20,7 @@ window.InsurancePortal = {
     cases: {}, // Liste des dossiers en attente ou débloqués
 
     init() {
-        console.log("mon50cc Insurance Portal : [ INITIALIZED ]");
+        console.log("mon50cc Insurance Portal (Revolut Edition) : [ INITIALIZED ]");
     },
 
     notify(message) {
@@ -65,35 +71,23 @@ window.InsurancePortal = {
 
     renderPaymentOptions(caseId) {
         return `
-            <div class="payment-selection">
-                <p>Pour accéder aux données certifiées (G-Force, Télémétrie, Inclinaison), veuillez choisir une méthode de règlement :</p>
-                
-                <div class="payment-option" onclick="InsurancePortal.payInstant('${caseId}')">
-                    <div class="option-icon"><i class="fa-solid fa-bolt"></i></div>
-                    <div class="option-details">
-                        <strong>Option 1 : Virement Instantané</strong>
-                        <span>Libération immédiate (10s) via Stripe/Fintecture.</span>
-                    </div>
-                    <div class="option-price">49.99€</div>
+            <div class="payment-selection" style="text-align:center; padding: 20px;">
+                <i class="fa-solid fa-hourglass-half fa-spin" style="font-size:3rem; color:#00d2ff; margin-bottom:20px;"></i>
+                <h3 style="color:#fff; font-size:1.4rem;">En attente de l'Assurance</h3>
+                <p style="color:#aaa; font-size:0.9rem; line-height:1.5;">
+                    Veuillez transmettre ce code de dossier à votre assureur :
+                </p>
+                <div class="case-code-badge" style="justify-content:center; margin: 20px 0;">
+                    <i class="fa-solid fa-hashtag"></i>
+                    <strong style="font-size:1.3rem;">${caseId}</strong>
                 </div>
-
-                <div class="payment-option" onclick="InsurancePortal.payWithWallet('${caseId}')">
-                    <div class="option-icon"><i class="fa-solid fa-wallet"></i></div>
-                    <div class="option-details">
-                        <strong>Option 2 : Portefeuille Virtuel</strong>
-                        <span>Débit immédiat de votre acompte professionnel.</span>
-                    </div>
-                    <div class="option-price">49.99€</div>
-                </div>
-
-                <div class="payment-option" onclick="InsurancePortal.uploadProof('${caseId}')">
-                    <div class="option-icon"><i class="fa-solid fa-file-invoice-dollar"></i></div>
-                    <div class="option-details">
-                        <strong>Option 3 : Preuve de Virement</strong>
-                        <span>Déblocage sur justificatif (PDF).</span>
-                    </div>
-                    <div class="option-price">49.99€</div>
-                </div>
+                <p style="color:#aaa; font-size:0.9rem; line-height:1.5;">
+                    Votre assureur pourra déverrouiller le rapport depuis le <strong>Portail Expert</strong>.<br>
+                    Le rapport sera disponible ici automatiquement dès validation du paiement.
+                </p>
+                <button onclick="InsurancePortal.pollPaymentConfirmation('${caseId}')" class="btn-litigation-start" style="margin-top:20px;">
+                    <i class="fa-solid fa-rotate"></i> Rafraîchir le statut
+                </button>
             </div>
         `;
     },
@@ -123,20 +117,252 @@ window.InsurancePortal = {
     },
 
 
-    // OPTION 1 : Virement Instantané
-    payInstant(caseId) {
-        speak("Initialisation du virement instantané. En attente de réception des fonds par la banque.");
+    // ──────────────────────────────────────────────────
+    // OPTION 1 : Paiement Revolut Merchant (flow complet)
+    // 1. Appel Firebase Function → création ordre Revolut (clé secrète serveur)
+    // 2. Récupération du order_token
+    // 3. RevolutCheckout(token).payWithPopup()
+    // 4. Webhook Revolut → Firebase → déblocage rapport
+    // ──────────────────────────────────────────────────
+    async payInstant(caseId) {
+        const pubKey = this.revolutPublicKey;
+        if (!pubKey) {
+            alert('⚠️ Clé publique Revolut manquante dans config.js');
+            return;
+        }
+
+        // Étape 1 : Afficher le spinner de chargement
         this.cases[caseId] = { status: 'waiting_for_funds', unlocked: false };
-        this.showPortal(caseId); // Refresh UI to show waiting state
-        
-        // Simulation du délai bancaire SEPA Instant (ex: 10s)
-        setTimeout(() => {
-            this.unlockCase(caseId, 'instant_sepa');
-            if (document.getElementById('screen-overlay').classList.contains('hidden') === false) {
-                this.showPortal(caseId); // Refresh UI to show unlocked state
+        this.renderRevolutLoadingModal(caseId);
+
+        try {
+            // Étape 2 : Créer l'ordre côté serveur via Firebase Function
+            speak('Initialisation du paiement sécurisé Revolut.');
+            const orderData = await this.createOrderViaFunction(caseId);
+
+            if (!orderData?.order_token) {
+                throw new Error('Token de paiement Revolut non reçu.');
             }
-            speak("Fonds reçus instantanément. Rapport débloqué.");
-        }, 8000);
+
+            // Étape 3 : Lancer le checkout Revolut avec le token
+            await this.launchRevolutCheckout(caseId, orderData);
+
+        } catch (err) {
+            console.error('[Revolut] Erreur paiement :', err);
+            this.renderRevolutErrorModal(caseId, err.message);
+        }
+    },
+
+    // ─ Appel Firebase Function : création de l'ordre Revolut ────────────
+    async createOrderViaFunction(caseId) {
+        const url = `${this.functionBaseUrl}/createRevolutOrder`;
+        const reportType = window.LitigationAI?.lastAnalysis?.reportType || 'STANDARD';
+
+        const response = await fetch(url, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                amount_cents: CONFIG?.REVOLUT?.AMOUNT_CENTS || 4999,
+                currency:     CONFIG?.REVOLUT?.CURRENCY     || 'EUR',
+                case_id:      caseId,
+                user_id:      window.session?.uid || 'guest',
+                report_type:  reportType
+            })
+        });
+
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({ error: response.statusText }));
+            throw new Error(err.error || `Erreur serveur (${response.status})`);
+        }
+
+        return await response.json();
+    },
+
+    // ─ Lance RevolutCheckout avec le token reçu ───────────────────
+    async launchRevolutCheckout(caseId, orderData) {
+        if (typeof RevolutCheckout !== 'function') {
+            // SDK pas encore chargé (async) — attendre 2s et réessayer
+            await new Promise(r => setTimeout(r, 2000));
+            if (typeof RevolutCheckout !== 'function') {
+                throw new Error('SDK Revolut non chargé. Vérifiez votre connexion.');
+            }
+        }
+
+        const instance = await RevolutCheckout(orderData.order_token, 'sandbox');
+        // Pour les tests production, utiliser : RevolutCheckout(token, 'prod')
+
+        instance.payWithPopup({
+            onSuccess: () => {
+                speak('Paiement Revolut confirmé. Vérification en cours.');
+                this.renderRevolutPendingConfirmation(caseId, orderData.order_id);
+                // Le webhook Revolut va débloquer le rapport dans Firestore.
+                // On poll Firebase toutes les 3s pour détecter la confirmation.
+                this.pollPaymentConfirmation(caseId);
+            },
+            onError: (message) => {
+                console.error('[Revolut] Erreur checkout :', message);
+                this.renderRevolutErrorModal(caseId, message);
+            },
+            onCancel: () => {
+                speak('Paiement annulé.');
+                this.cases[caseId] = { status: 'pending_payment', unlocked: false };
+                this.showPortal(caseId);
+            }
+        });
+    },
+
+    // ─ Poll Firestore pour détecter la confirmation webhook ────────
+    async pollPaymentConfirmation(caseId, attempts = 0) {
+        if (attempts > 20) { // Timeout après ~60s
+            this.renderRevolutErrorModal(caseId, 'Délai de confirmation dépassé. Contactez le support.');
+            return;
+        }
+
+        await new Promise(r => setTimeout(r, 3000));
+
+        try {
+            // Vérifier dans Firestore si le webhook a confirmé le paiement
+            if (typeof db !== 'undefined') {
+                const doc = await db.collection('payment_confirmations').doc(caseId).get();
+                if (doc.exists) {
+                    this.unlockCase(caseId, 'revolut_webhook');
+                    this.renderRevolutSuccess(caseId);
+                    speak('Rapport débloqué avec succès. Bonne route.');
+                    return;
+                }
+            } else {
+                // Fallback : vérifier via la Cloud Function
+                const url = `${this.functionBaseUrl}/checkPaymentStatus?case_id=${caseId}&user_id=${window.session?.uid || ''}`;
+                const resp = await fetch(url);
+                const data = await resp.json();
+                if (data.paid) {
+                    this.unlockCase(caseId, 'revolut_webhook');
+                    this.renderRevolutSuccess(caseId);
+                    speak('Rapport débloqué avec succès.');
+                    return;
+                }
+            }
+        } catch (e) {
+            console.warn('[Revolut Poll] Erreur :', e);
+        }
+
+        // Continuer à poller
+        this.pollPaymentConfirmation(caseId, attempts + 1);
+    },
+
+    // ─ Modals UI ─────────────────────────────────────────────────
+    renderRevolutSuccess(caseId) {
+        const content = document.getElementById('screen-content');
+        if (!content) return;
+        content.innerHTML = `
+            <div class="litigation-portal" style="animation: portal-fade-in 0.5s ease-out;">
+                <div class="litigation-analyzing" style="text-align:center; padding: 40px 20px;">
+                    <div class="revolut-logo-ring" style="border-color: #00ff00; box-shadow: 0 0 30px rgba(0,255,0,0.5);">
+                        <i class="fa-solid fa-unlock" style="color:#00ff00; font-size:2rem; animation: pulse-halo 2s infinite;"></i>
+                    </div>
+                    <h3 style="color:#00ff00; font-size:1.5rem; margin-top:20px;">Paiement Validé</h3>
+                    <p style="color:#fff; font-size:0.9rem; margin-top:10px;">Le webhook Revolut a confirmé la transaction.</p>
+                    <p style="color:#00d2ff; font-size:1rem; margin-top:5px; font-weight:bold;">Rapport Déverrouillé</p>
+                </div>
+            </div>`;
+        
+        // Après 3 secondes, on affiche le portail complet
+        setTimeout(() => {
+            this.showPortal(caseId);
+        }, 3000);
+    },
+
+    renderRevolutLoadingModal(caseId) {
+        const content = document.getElementById('screen-content');
+        if (!content) return;
+        const price = (CONFIG?.REVOLUT?.AMOUNT_CENTS || 4999) / 100;
+        content.innerHTML = `
+            <div class="litigation-portal">
+                <div class="litigation-analyzing">
+                    <div class="revolut-pay-header">
+                        <div class="revolut-logo-ring">
+                            <i class="fa-solid fa-lock" style="color:#7c4dff; font-size:1.8rem;"></i>
+                        </div>
+                        <h3>Paiement Sécurisé</h3>
+                        <p style="color:#aaa; font-size:0.82rem;">Préparation du checkout <strong style="color:#fff;">Revolut</strong>…</p>
+                    </div>
+                    <div class="revolut-amount-badge">
+                        <span class="revolut-amount-value">${price.toFixed(2)} €</span>
+                        <span class="revolut-amount-label">Rapport Assurance certifié — ${caseId}</span>
+                    </div>
+                    <div class="ai-progress-bar" style="margin-top:20px;">
+                        <div class="ai-progress-fill revolut-progress" style="width:30%;"></div>
+                    </div>
+                    <p class="ai-status-text" id="revolut-status-txt">Création de l'ordre de paiement…</p>
+                </div>
+            </div>`;
+        // Animation de la barre
+        setTimeout(() => {
+            const fill = content.querySelector('.revolut-progress');
+            const txt  = content.querySelector('#revolut-status-txt');
+            if (fill) fill.style.width = '70%';
+            if (txt)  txt.textContent  = 'Connexion à Revolut Merchant…';
+        }, 800);
+        setTimeout(() => {
+            const fill = content.querySelector('.revolut-progress');
+            const txt  = content.querySelector('#revolut-status-txt');
+            if (fill) fill.style.width = '90%';
+            if (txt)  txt.textContent  = 'Ouverture du checkout…';
+        }, 1800);
+    },
+
+    renderRevolutPendingConfirmation(caseId, orderId) {
+        const content = document.getElementById('screen-content');
+        if (!content) return;
+        content.innerHTML = `
+            <div class="litigation-portal litigation-sending">
+                <i class="fa-solid fa-satellite-dish fa-bounce" style="font-size:3rem; color:#7c4dff;"></i>
+                <h3 style="margin-top:15px;">Confirmation en cours…</h3>
+                <p style="color:#888; font-size:0.83rem; margin-top:10px;">
+                    Votre paiement a été soumis. En attente de la confirmation Revolut.
+                </p>
+                <div class="case-code-badge" style="margin-top:20px;">
+                    <i class="fa-solid fa-hashtag"></i>
+                    <span>Dossier :</span>
+                    <strong>${caseId}</strong>
+                </div>
+                <div class="case-code-badge">
+                    <i class="fa-brands fa-revolut" style="color:#7c4dff;"></i>
+                    <span>Ordre Revolut :</span>
+                    <strong style="font-size:0.7rem;">${orderId}</strong>
+                </div>
+                <p style="font-size:0.7rem; color:#555; margin-top:15px;">
+                    <i class="fa-solid fa-clock"></i> Vérification automatique toutes les 3 secondes…
+                </p>
+            </div>`;
+    },
+
+    renderRevolutErrorModal(caseId, message) {
+        const content = document.getElementById('screen-content');
+        if (!content) return;
+        content.innerHTML = `
+            <div class="litigation-portal litigation-error">
+                <i class="fa-solid fa-triangle-exclamation" style="font-size:3rem; color:#ff4d4d;"></i>
+                <h3>Erreur de paiement</h3>
+                <p style="color:#888; font-size:0.83rem; margin-top:10px;">${message || 'Une erreur est survenue.'}</p>
+                <div style="display:flex; gap:10px; margin-top:20px;">
+                    <button class="btn-litigation-start" onclick="InsurancePortal.payInstant('${caseId}')" style="flex:1;">
+                        <i class="fa-solid fa-rotate-right"></i> Réessayer
+                    </button>
+                    <button class="btn-close-litigation" onclick="document.getElementById('screen-overlay').classList.add('hidden')" style="flex:1;">
+                        <i class="fa-solid fa-times"></i> Fermer
+                    </button>
+                </div>
+            </div>`;
+    },
+
+    // DOSSIER LITIGE IA — Lance l'analyse Blackbox intelligente
+    openLitigationWizard(caseId) {
+        if (typeof window.LitigationAI === 'undefined') {
+            alert('Module LitigationAI non chargé. Vérifiez que litigation-ai.js est inclus dans la page.');
+            return;
+        }
+        window.LitigationAI.openPortal();
     },
 
     // OPTION 2 : Portefeuille

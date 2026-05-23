@@ -1,4 +1,4 @@
-// --- CORE NAVIGATION (SAFE ZONE) ---
+﻿// --- CORE NAVIGATION (SAFE ZONE) ---
 window.toggleMenu = function() {
     try {
         const sidebar = document.getElementById('sidebar');
@@ -91,10 +91,10 @@ history.pushState(null, null, window.location.pathname);
 console.log("mon50ccetmoi v60.0.19-GOLD : Production Ready.");
 
 let map;
-let directionsService;
-let directionsRenderer;
 let geocoder;
 let trafficLayer;
+let directionsService;
+let directionsRenderer;
 let userMarker = null;
 let accuracyCircle = null;
 let currentPosition = null; 
@@ -142,6 +142,10 @@ function checkTrialExpiration() {
     if (window.session && window.session.isTrialExpired) {
         const overlay = document.getElementById('sub-overlay');
         if (overlay) overlay.classList.remove('hidden');
+    content.classList.remove('page-enter-active');
+    content.classList.add('page-enter');
+    setTimeout(() => content.classList.add('page-enter-active'), 50);
+    if(navigator.vibrate) navigator.vibrate(50);
         speak("Alerte abonnement : Votre période d'essai gratuite est terminée.");
     }
 }
@@ -185,17 +189,18 @@ window.initMapController = async function() {
         // Modern Library Imports
         const { Map } = await google.maps.importLibrary("maps");
         const { AdvancedMarkerElement, PinElement } = await google.maps.importLibrary("marker");
+        // Suppression de l'import "routes" qui bloque le chargement de la carte (API non activée)
 
-        // Autocomplete (optionnel — peut être indisponible selon le plan API)
-        let Autocomplete = null;
+        // PlaceAutocompleteElement (New API)
+        let PlaceAutocompleteElement = null;
         try {
             const placesLib = await google.maps.importLibrary("places");
-            Autocomplete = placesLib.Autocomplete;
+            PlaceAutocompleteElement = placesLib.PlaceAutocompleteElement;
         } catch(e) {
-            console.warn("mon50cc Maps : Autocomplete non disponible (plan API).", e.message);
+            console.warn("mon50cc Maps : PlaceAutocompleteElement non disponible (plan API).", e.message);
         }
 
-        window.googleLibraries = { Map, AdvancedMarkerElement, PinElement, Autocomplete };
+        window.googleLibraries = { Map, AdvancedMarkerElement, PinElement, PlaceAutocompleteElement };
 
         console.log("mon50cc Maps : Création de l'objet Map...");
         map = new Map(mapElement, {
@@ -207,47 +212,69 @@ window.initMapController = async function() {
             gestureHandling: 'greedy'
         });
 
-        // DirectionsService est déprécié mais on le garde temporairement pour le fallback
-        directionsService = new google.maps.DirectionsService();
-        directionsRenderer = new google.maps.DirectionsRenderer({ 
-            map: map, 
-            suppressMarkers: true,
-            preserveViewport: false
-        });
         geocoder = new google.maps.Geocoder();
         trafficLayer = new google.maps.TrafficLayer();
         trafficLayer.setMap(map);
-
-        // Autocomplete pour le Départ (Optionnel)
-        const startInput = document.getElementById('route-start');
-        if (startInput && Autocomplete) {
-            new Autocomplete(startInput);
+        try {
+            const routesLib = await google.maps.importLibrary("routes");
+            if (routesLib.DirectionsService && routesLib.DirectionsRenderer) {
+                directionsService = new routesLib.DirectionsService();
+                directionsRenderer = new routesLib.DirectionsRenderer({
+                    map: map,
+                    suppressMarkers: true,
+                    polylineOptions: { strokeColor: '#00f2ff', strokeOpacity: 0.8, strokeWeight: 6 }
+                });
+            } else {
+                console.warn("mon50cc Maps : DirectionsService non disponible dans routesLib.");
+            }
+        } catch(e) {
+            console.warn("mon50cc Maps : Erreur initialisation DirectionsService", e);
         }
 
-        const input = document.getElementById('route-search');
-        if (input && Autocomplete) {
-            const autocomplete = new Autocomplete(input);
-            autocomplete.bindTo('bounds', map);
-            autocomplete.addListener('place_changed', () => {
-                const place = autocomplete.getPlace();
-                if (!place.geometry) {
+        // PlaceAutocompleteElement pour le Départ
+        const startInputOld = document.getElementById('route-start');
+        if (startInputOld && PlaceAutocompleteElement) {
+            const startInputGmp = new PlaceAutocompleteElement({
+                requestedLanguage: 'fr'
+            });
+            startInputGmp.id = 'route-start-gmp';
+            startInputGmp.setAttribute('placeholder', 'Position de départ...');
+            startInputOld.parentNode.replaceChild(startInputGmp, startInputOld);
+        }
+
+        // PlaceAutocompleteElement pour la Recherche
+        const inputOld = document.getElementById('route-search');
+        if (inputOld && PlaceAutocompleteElement) {
+            const searchInputGmp = new PlaceAutocompleteElement({
+                requestedLanguage: 'fr'
+            });
+            searchInputGmp.id = 'route-search-gmp';
+            searchInputGmp.setAttribute('placeholder', 'Où allez-vous ?');
+            
+            inputOld.parentNode.replaceChild(searchInputGmp, inputOld);
+
+            searchInputGmp.addEventListener('gmp-placeselect', async ({ place }) => {
+                if (!place) return;
+                await place.fetchFields({ fields: ['location', 'viewport'] });
+                
+                if (!place.location) {
                     window.searchDestination();
                     return;
                 }
-                if (place.geometry.viewport) {
-                    map.fitBounds(place.geometry.viewport);
+                if (place.viewport) {
+                    map.fitBounds(place.viewport);
                 } else {
-                    map.setCenter(place.geometry.location);
+                    map.setCenter(place.location);
                     map.setZoom(17);
                 }
 
                 if (!currentPosition) {
                     speak("Recherche de votre position GPS. L'itinéraire démarrera automatiquement dès que possible.");
-                    window.pendingDestinationName = input.value;
+                    window.pendingDestinationName = searchInputGmp.inputValue;
                     return;
                 }
 
-                calculateRouteSansAutoroute(currentPosition, place.geometry.location);
+                calculateRouteSansAutoroute(currentPosition, place.location);
             });
         }
 
@@ -419,15 +446,34 @@ window.toggleTilt = function() {
     map.setTilt(currentTilt === 45 ? 0 : 45);
 }
 
-// --- 2. GPS & TEMPS RÉEL ---
+// ─── Wake Lock résilient (se réactive automatiquement en cas de perte) ────────
+let wakeLockRef = null;
 async function requestWakeLock() {
+    if (!('wakeLock' in navigator)) return;
     try {
-        if ('wakeLock' in navigator) {
-            wakeLock = await navigator.wakeLock.request('screen');
-            console.log("Anti-veille actif.");
-        }
-    } catch (err) { console.warn(err); }
+        wakeLockRef = await navigator.wakeLock.request('screen');
+        console.log("mon50cc GPS : Wake Lock acquis.");
+        // Réacquérir automatiquement quand l'onglet redevient visible
+        wakeLockRef.addEventListener('release', () => {
+            console.warn("mon50cc GPS : Wake Lock perdu, réacquisition programmée.");
+            wakeLockRef = null;
+        });
+    } catch (err) {
+        console.warn("mon50cc GPS : Wake Lock refusé :", err.message);
+    }
 }
+
+// Réacquérir le Wake Lock quand l'app revient au premier plan
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && !wakeLockRef) {
+        requestWakeLock();
+        // Relancer le GPS si on a perdu la position pendant le sleep
+        if (!currentPosition && gpsWatchId === null) {
+            console.log("mon50cc GPS : Retour au premier plan sans position → relance GPS.");
+            startGeolocation();
+        }
+    }
+});
 
 async function checkLegalConsent() {
     const consent = localStorage.getItem('legal_consent_accepted');
@@ -482,6 +528,39 @@ async function checkLegalConsent() {
 }
 
 function showGpsBanner(msg, code) {
+    // Ne pas afficher si on a déjà une position valide (évite la bannière rouge permanente)
+    if (currentPosition && code !== 1) {
+        console.warn("mon50cc GPS : Erreur ignorée (position déjà disponible) :", msg);
+        return;
+    }
+
+    if (code === 1) {
+        let hardLock = document.getElementById('gps-hard-lock');
+        if (!hardLock) {
+            hardLock = document.createElement('div');
+            hardLock.id = 'gps-hard-lock';
+            hardLock.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(10, 10, 10, 0.98); backdrop-filter:blur(10px); color:white; z-index:999999; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:30px; text-align:center;";
+            document.body.appendChild(hardLock);
+        }
+        
+        hardLock.innerHTML = `
+            <i class="fa-solid fa-location-crosshairs" style="font-size:4rem; color:#ef4444; margin-bottom:20px;"></i>
+            <h2 style="margin-bottom:15px; color:#ffb703;">GPS OBLIGATOIRE</h2>
+            <p style="font-size:1rem; line-height:1.5; margin-bottom:25px;">
+                mon50cc est une application de navigation GPS et de sécurité.<br><br>
+                <b>Sans accès à votre position, l'application ne peut pas fonctionner.</b>
+            </p>
+            <button onclick="window.repairGps()" style="width:100%; padding:15px; background:#ffb703; color:black; border:none; border-radius:30px; font-weight:bold; font-size:1.1rem; margin-bottom:15px; box-shadow:0 0 15px rgba(255, 183, 3, 0.5);">
+                AUTORISER LE GPS
+            </button>
+            <p style="font-size:0.8rem; color:#888;">
+                Veuillez accorder la permission dans les paramètres de votre appareil.
+            </p>
+        `;
+        hardLock.style.display = 'flex';
+        return; // On affiche le hard lock, pas la bannière
+    }
+
     let banner = document.getElementById('gps-error-banner');
     if (!banner) {
         banner = document.createElement('div');
@@ -490,21 +569,24 @@ function showGpsBanner(msg, code) {
         document.body.appendChild(banner);
     }
     
-    // Bouton Réparer uniquement si c'est une permission refusée
-    const repairBtn = code === 1
-        ? `<button onclick="window.repairGps()" style="margin-top:10px; padding:8px 20px; background:#ffb703; color:#000; border:none; border-radius:20px; font-weight:bold; font-size:0.85rem; cursor:pointer;">🔧 Réparer le GPS</button>`
-        : `<button onclick="window.retryGps()" style="margin-top:10px; padding:8px 20px; background:#ffb703; color:#000; border:none; border-radius:20px; font-weight:bold; font-size:0.85rem; cursor:pointer;">🔄 Réessayer</button>`;
+    const repairBtn = `<button onclick="window.retryGps()" style="margin-top:10px; padding:8px 20px; background:#ffb703; color:#000; border:none; border-radius:20px; font-weight:bold; font-size:0.85rem; cursor:pointer;">🔄 Réessayer</button>`;
     
     banner.innerHTML = `<div style="font-weight:bold; margin-bottom:4px;"><i class="fa-solid fa-triangle-exclamation" style="margin-right:6px;"></i>GPS : ${msg}</div><div style="font-size:0.72rem; color:#fca5a5;">(Code erreur: ${code})</div>${repairBtn}`;
     banner.style.display = 'block';
+
+    // Auto-dismiss après 20s pour les erreurs non-critiques (code 2 = signal faible, code 3 = timeout)
+    clearTimeout(window._gpsBannerTimer);
+    window._gpsBannerTimer = setTimeout(hideGpsBanner, 20000);
 }
 
 function hideGpsBanner() {
     const banner = document.getElementById('gps-error-banner');
     if (banner) banner.style.display = 'none';
+    const hardLock = document.getElementById('gps-hard-lock');
+    if (hardLock) hardLock.style.display = 'none';
+    clearTimeout(window._gpsBannerTimer);
 }
 
-// Bouton "Réparer" : explique comment ré-autoriser la localisation dans Chrome Android
 window.repairGps = function() {
     const appUrl = 'mon50ccetmoi.com';
     const instructions = [
@@ -513,21 +595,36 @@ window.repairGps = function() {
         "2. Paramètres → Paramètres du site",
         "3. Localisation → Cherche '" + appUrl + "'",
         "4. Passe de 'Bloquer' à 'Autoriser'",
-        "5. Recharge l'application"
+        "5. Recharge l'application",
+        "",
+        "📱 Dans l'app Android :",
+        "1. Appui long sur l'icône de l'app",
+        "2. Infos sur l'appli → Autorisations",
+        "3. Position → Autoriser (ou Toujours autoriser)"
     ].join("\n");
     alert(instructions);
 };
 
-// Bouton "Réessayer" : relance la géolocalisation
 window.retryGps = function() {
     hideGpsBanner();
-    fallbackWatchId = null; // reset pour permettre un nouveau fallback
+    // Reset complet pour repartir de zéro
+    if (gpsWatchId !== null) {
+        navigator.geolocation.clearWatch(gpsWatchId);
+        gpsWatchId = null;
+    }
+    if (fallbackWatchId !== null) {
+        navigator.geolocation.clearWatch(fallbackWatchId);
+        fallbackWatchId = null;
+    }
+    gpsRetryCount = 0;
     startGeolocation();
     speak("Nouvelle tentative de localisation GPS.");
 };
 
 let gpsWatchId = null;
 let fallbackWatchId = null;
+let gpsRetryCount = 0;
+const GPS_MAX_RETRIES = 3;
 
 async function startGeolocation() {
     if (!('geolocation' in navigator)) {
@@ -536,91 +633,119 @@ async function startGeolocation() {
         return;
     }
 
-    // ÉTAPE 1 : Vérifier la permission avant tout appel GPS (évite le blocage silencieux)
+    // Acquérir le Wake Lock pour maintenir le GPS actif
+    requestWakeLock();
+
+    // ÉTAPE 1 : Vérifier les permissions (non-bloquant)
     if (navigator.permissions) {
         try {
             const perm = await navigator.permissions.query({ name: 'geolocation' });
-            console.log("mon50cc GPS : Permission state =", perm.state);
+            console.log("mon50cc GPS : Permission =", perm.state);
 
             if (perm.state === 'denied') {
-                // Permission définitivement refusée, on ne peut rien faire sans action utilisateur
-                console.error("mon50cc GPS : Permission REFUSÉE par le navigateur.");
                 speak("Le GPS est bloqué. Vérifiez les permissions de l'application.");
-                showGpsBanner("Permission refusée dans Chrome. Appuyez sur 'Réparer' pour activer.", 1);
-                return;
+                showGpsBanner("Permission refusée. Appuyez sur 'Réparer'.", 1);
+                return; // Inutile de continuer si explicitement refusé
             }
 
-            // Si la permission change plus tard (ex: l'utilisateur l'accorde manuellement)
             perm.onchange = () => {
                 if (perm.state === 'granted') {
                     hideGpsBanner();
                     window.retryGps();
+                } else if (perm.state === 'denied') {
+                    showGpsBanner("Permission GPS révoquée.", 1);
                 }
             };
-        } catch(e) {
-            console.warn("mon50cc GPS : API Permissions non disponible, tentative directe.", e);
+        } catch (e) {
+            console.warn("mon50cc GPS : API Permissions indisponible.", e);
         }
     }
 
-    // ÉTAPE 2 : Warm-up réseau — accepte une position vieille de 5 minutes max
-    // Cela permet de trouver une position approximative immédiatement via WiFi/4G
-    // sans attendre les satellites (clé pour une utilisation en intérieur).
-    console.log("mon50cc GPS : Tentative warm-up localisation réseau...");
-    navigator.geolocation.getCurrentPosition(
-        (pos) => {
-            console.log(`mon50cc GPS : ✅ Position réseau trouvée (précision: ${pos.coords.accuracy.toFixed(0)}m)`);
-            updatePosition(pos);
-            hideGpsBanner();
-        }, 
-        (err) => console.warn("mon50cc GPS : Warm-up réseau échoué", err.code, err.message), 
-        {enableHighAccuracy: false, timeout: 10000, maximumAge: 300000} // 5 min de cache OK
-    );
-
-    // ÉTAPE 3 : Surveillance haute précision (satellites) en arrière-plan
+    // ÉTAPE 2 : Surveillance CONTINUE (satellites GPS / réseau)
+    // On utilise uniquement watchPosition car iOS gère très mal les appels concurrents (getCurrentPosition + watchPosition)
     const geoOptions = {
         enableHighAccuracy: true,
-        timeout: 20000, // 20s pour laisser le temps aux satellites
-        maximumAge: 5000
+        timeout: 30000,       // 30s — laisse le temps aux satellites en intérieur
+        maximumAge: 3000      // 3s de cache max pour les updates fréquents
     };
 
     const onError = (err) => {
         let msg = "Erreur GPS inconnue";
         if (err.code === 1) msg = "Permission GPS refusée. Appuyez sur 'Réparer'.";
-        if (err.code === 2) msg = "Signal GPS faible (intérieur ?). Position réseau utilisée.";
-        if (err.code === 3) msg = "Recherche GPS en cours... (sortez à l'extérieur)";
-        console.error("mon50cc GPS : " + msg, "code:", err.code);
-        
+        if (err.code === 2) msg = "Signal GPS faible. Sortez à l'extérieur.";
+        if (err.code === 3) msg = "Recherche GPS en cours... Patience.";
+        console.error("mon50cc GPS :", msg, "code:", err.code);
+
+        // Permission refusée → bannière immédiate
         if (err.code === 1) {
             speak("Le GPS est bloqué. Vérifiez les permissions.");
             showGpsBanner(msg, err.code);
-        } else if (!currentPosition) {
-            // Pas encore de position du tout — on affiche un avertissement discret
-            if (err.code === 2 || err.code === 3) speak("Recherche du signal GPS...");
-            showGpsBanner(msg, err.code);
-        } else {
-            // On a déjà une position réseau : on masque l'erreur, pas de panique
-            console.warn("GPS haute précision: perte satellite, position réseau disponible.");
-            hideGpsBanner();
+            return;
         }
 
-        // Fallback basse précision si vraiment aucune position et pas déjà actif
-        if (fallbackWatchId === null && err.code !== 1) {
-            console.log("mon50cc GPS : Activation du fallback basse précision...");
-            fallbackWatchId = navigator.geolocation.watchPosition(
-                (pos) => {
-                    console.log("GPS: ✅ Position basse précision trouvée");
-                    updatePosition(pos);
-                    hideGpsBanner();
-                },
-                (e) => console.warn("GPS low-acc fallback failed:", e.code), 
-                { enableHighAccuracy: false, timeout: 20000, maximumAge: 30000 }
-            );
+        // Si on n'a aucune position → tenter le fallback basse précision
+        if (!currentPosition) {
+            showGpsBanner(msg, err.code);
+            activateLowAccuracyFallback();
         }
+        // Si on a déjà une position → on garde celle-ci, pas de bannière
     };
 
-    if (gpsWatchId !== null) navigator.geolocation.clearWatch(gpsWatchId);
-    gpsWatchId = navigator.geolocation.watchPosition(updatePosition, onError, geoOptions);
-    console.log("mon50cc GPS : Surveillance haute précision démarrée (watch ID:", gpsWatchId, ").");
+    // Nettoyer les anciens watchers avant d'en créer de nouveaux
+    if (gpsWatchId !== null) {
+        navigator.geolocation.clearWatch(gpsWatchId);
+        gpsWatchId = null;
+    }
+
+    gpsWatchId = navigator.geolocation.watchPosition(
+        (pos) => {
+            // Filtrage qualité : accepter la première position à tout prix, puis filtrer à < 500m
+            const acc = pos.coords.accuracy || 0;
+            if (currentPosition && acc > 500) {
+                console.warn(`mon50cc GPS : Position ignorée (précision: ${acc.toFixed(0)}m > 500m)`);
+                return;
+            }
+            updatePosition(pos);
+            hideGpsBanner();
+            gpsRetryCount = 0; // Reset du compteur de retry
+        },
+        onError,
+        geoOptions
+    );
+    console.log("mon50cc GPS : Surveillance haute précision démarrée (watch:", gpsWatchId, ")");
+
+    // ÉTAPE 4 : Timer de sécurité — si aucune position après 15s, forcer le fallback
+    setTimeout(() => {
+        if (!currentPosition && fallbackWatchId === null) {
+            console.warn("mon50cc GPS : Aucune position après 15s → activation fallback.");
+            activateLowAccuracyFallback();
+        }
+    }, 15000);
+}
+
+// Fallback basse précision (WiFi/Cellulaire) — déclenché automatiquement
+function activateLowAccuracyFallback() {
+    if (fallbackWatchId !== null) return; // Déjà actif
+    if (gpsRetryCount >= GPS_MAX_RETRIES) {
+        console.error("mon50cc GPS : Nombre max de retries atteint.");
+        showGpsBanner("GPS indisponible. Vérifiez que la localisation est activée dans les paramètres.", 2);
+        return;
+    }
+    gpsRetryCount++;
+    console.log(`mon50cc GPS : Fallback basse précision (tentative ${gpsRetryCount}/${GPS_MAX_RETRIES})...`);
+
+    fallbackWatchId = navigator.geolocation.watchPosition(
+        (pos) => {
+            const acc = pos.coords.accuracy || 0;
+            if (!currentPosition || acc <= 3000) {
+                console.log(`mon50cc GPS : ✅ Fallback OK (précision: ${acc.toFixed(0)}m)`);
+                updatePosition(pos);
+                hideGpsBanner();
+            }
+        },
+        (e) => console.warn("mon50cc GPS : Fallback échoué :", e.code, e.message),
+        { enableHighAccuracy: false, timeout: 20000, maximumAge: 60000 }
+    );
 }
 
 // Remplacement du démarrage automatique par la vérification légale
@@ -728,10 +853,20 @@ function updatePosition(position) {
     if (window.OracleEngine) window.OracleEngine.updateRegion(lat, lng);
 
 
+    // Sécurité: accuracy peut être null sur certains appareils
+    const safeAccuracy = accuracy || 0;
+
     // Update Telemetry HUD if active
     if (window.Telemetry) {
         const gpsStatus = document.getElementById('tel-gps');
-        if (gpsStatus) gpsStatus.textContent = `FIX (${accuracy.toFixed(1)}m)`;
+        if (gpsStatus) gpsStatus.textContent = `FIX (${safeAccuracy.toFixed(1)}m)`;
+    }
+    
+    // Update main HUD GPS indicator
+    const hudGps = document.getElementById('hud-gps');
+    if (hudGps) {
+        hudGps.textContent = `FIX (${Math.round(safeAccuracy)}m)`;
+        hudGps.style.color = safeAccuracy <= 15 ? '#00e676' : '#ffb703';
     }
     
     // --- GUEST MODE LOCKS (Initial logic check) ---
@@ -868,7 +1003,7 @@ function updatePosition(position) {
             accuracyCircle = new google.maps.Circle({
                 map: map,
                 center: currentPosition,
-                radius: accuracy / 2,
+                radius: safeAccuracy / 2,
                 fillColor: "#ffffff",
                 fillOpacity: 0.1,
                 strokeColor: "#ffffff",
@@ -897,7 +1032,7 @@ function updatePosition(position) {
 
             if (accuracyCircle && accuracyCircle.setCenter) {
                 accuracyCircle.setCenter(currentPosition);
-                accuracyCircle.setRadius(accuracy / 2);
+                accuracyCircle.setRadius(safeAccuracy / 2);
             }
             
             // On recentre et on décale pour la visibilité
@@ -1436,123 +1571,14 @@ async function calculateRouteSansAutoroute(start, end) {
     currentRoutePolylines = [];
     currentRouteMarkers.forEach(m => m.setMap(null));
     currentRouteMarkers = [];
-    if (directionsRenderer) directionsRenderer.setMap(null);
 
-    try {
-        const { Route, AdvancedMarkerElement, PinElement } = window.googleLibraries;
-        
-        // Conversion des LatLng pour le nouveau format (Google Expects raw numbers or LatLng object)
-        const request = {
-            origin: { location: { latLng: { latitude: start.lat(), longitude: start.lng() } } },
-            destination: { location: { latLng: { latitude: end.lat(), longitude: end.lng() } } },
-            travelMode: 'DRIVE',
-            routeModifiers: {
-                avoidHighways: true,
-                avoidTolls: true
-            },
-            routingPreference: 'TRAFFIC_AWARE',
-            units: 'METRIC',
-            languageCode: 'fr-FR'
-        };
-
-        console.log("mon50cc Routes : Calcul via New Routes API...");
-        const { routes } = await Route.computeRoutes(request, {
-            fields: ['routes.legs', 'routes.polyline', 'routes.distanceMeters', 'routes.duration']
-        });
-
-        if (routes && routes.length > 0) {
-            const route = routes[0];
-            const leg = route.legs[0];
-
-            // Rendu de la Polyline (Cyberpunk Cyan)
-            const polylines = route.createPolylines();
-            polylines.forEach(p => {
-                p.setOptions({
-                    strokeColor: '#00f2ff',
-                    strokeOpacity: 0.8,
-                    strokeWeight: 6,
-                    map: map
-                });
-                currentRoutePolylines.push(p);
-            });
-
-            // Marqueur de Destination (Standard Marker fallback)
-            const destMarker = new google.maps.Marker({
-                map: map,
-                position: end,
-                title: "Destination"
-            });
-            currentRouteMarkers.push(destMarker);
-
-            // Affichage du bandeau
-            const infoBar = document.getElementById('nav-info-bar');
-            if (infoBar) {
-                infoBar.style.setProperty('display', 'flex', 'important');
-            }
-            
-            const btnStop = document.getElementById('btn-stop-nav');
-            if (btnStop) btnStop.classList.remove('hidden');
-
-            // Mise à jour des KM et du TEMPS
-            const distEl = document.getElementById('nav-dist');
-            const timeEl = document.getElementById('nav-time');
-            const etaEl = document.getElementById('nav-eta');
-
-            const distKm = (route.distanceMeters / 1000).toFixed(1) + " km";
-            let durationSec = parseInt(route.duration.replace('s', ''));
-
-            // --- AJUSTEMENT 50cc ---
-            durationSec = Math.round(durationSec * 1.20); // +20% pour scooter 50cc en ville
-            const maxSpeedMs = 40 / 3.6; 
-            const googleSpeedMs = route.distanceMeters / durationSec;
-            if (googleSpeedMs > maxSpeedMs) {
-                durationSec = Math.round(route.distanceMeters / maxSpeedMs);
-                if (window.Telemetry) window.Telemetry.addLog("INFO", `ETA ajusté pour 50cc (vitesse native trop élevée).`);
-            }
-            
-            const destName = document.getElementById('route-search').value || 'ITINÉRAIRE 50CC';
-            const titleEl = document.querySelector('.route-title');
-            if (titleEl) titleEl.textContent = destName.toUpperCase();
-
-            let durationText;
-            const totalMins = Math.floor(durationSec / 60);
-            if (totalMins >= 60) {
-                durationText = `${Math.floor(totalMins/60)} h ${totalMins%60} min`;
-            } else {
-                durationText = `${totalMins} min`;
-            }
-
-            if (distEl) distEl.textContent = distKm;
-            if (timeEl) timeEl.textContent = durationText;
-            if (etaEl) {
-                const arrivalTime = new Date(Date.now() + durationSec * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                etaEl.textContent = arrivalTime;
-            }
-
-            // Détection de ferry (Adaptée au nouveau format)
-            window.routeFerries = leg.steps.filter(s => {
-                const instr = (s.navigationInstruction?.instructions || "").toLowerCase();
-                return instr.includes('ferry') || (s.maneuver && s.maneuver.toLowerCase().includes('ferry'));
-            });
-            lastSpokenFerryIndex = -1;
-
-            if (window.routeFerries.length > 0) {
-                setTimeout(() => speak('ferry_detected'), 4000);
-                if (window.NeuralHUD && typeof window.NeuralHUD.logToConsole === "function") {
-                    window.NeuralHUD.logToConsole(`NAV_INTEL: FERRY_CROSSING_AHEAD (${window.routeFerries.length})`);
-                }
-            }
-
-            const etaText = etaEl ? etaEl.textContent : '';
-            speak(window.getLocalizedRouteMsg(distKm, etaText, window.isRodageActive));
-
-            return; // Succès
-        }
-    } catch (err) {
-        console.warn("mon50cc Routes : Échec New Routes API, basculement vers Legacy...", err);
+    if (!directionsService || !directionsRenderer) {
+        speak("Le moteur de routage n'est pas disponible pour le moment.");
+        return;
     }
 
-    // FALLBACK : DirectionsService Legacy
+    if (directionsRenderer) directionsRenderer.setMap(null);
+
     const legacyRequest = {
         origin: start,
         destination: end,
@@ -1562,6 +1588,7 @@ async function calculateRouteSansAutoroute(start, end) {
         provideRouteAlternatives: window.isRodageActive
     };
 
+    console.log("mon50cc Routes : Calcul via DirectionsService...");
     directionsService.route(legacyRequest, (result, status) => {
         if (status === 'OK') {
             if (directionsRenderer) {
@@ -1575,9 +1602,13 @@ async function calculateRouteSansAutoroute(start, end) {
                 infoBar.style.setProperty('display', 'flex', 'important');
             }
             
+            const btnStop = document.getElementById('btn-stop-nav');
+            if (btnStop) btnStop.classList.remove('hidden');
+
             const distEl = document.getElementById('nav-dist');
             const timeEl = document.getElementById('nav-time');
             const etaEl = document.getElementById('nav-eta');
+            if(typeof window.startPremiumNavigation === 'function') window.startPremiumNavigation(leg);
 
             if (distEl) distEl.textContent = leg.distance.text;
 
@@ -1590,6 +1621,7 @@ async function calculateRouteSansAutoroute(start, end) {
             const googleSpeedMs = distanceMeters / durationSec;
             if (googleSpeedMs > maxSpeedMs) {
                 durationSec = Math.round(distanceMeters / maxSpeedMs);
+                if (window.Telemetry) window.Telemetry.addLog("INFO", `ETA ajusté pour 50cc.`);
             }
             
             const destNameLegacy = document.getElementById('route-search').value || 'ITINÉRAIRE 50CC';
@@ -1622,9 +1654,6 @@ async function calculateRouteSansAutoroute(start, end) {
                 if (window.NeuralHUD && typeof window.NeuralHUD.logToConsole === "function") {
                     window.NeuralHUD.logToConsole(`NAV_INTEL: FERRY_CROSSING_AHEAD (${window.routeFerries.length})`);
                 }
-                if (window.Telemetry) {
-                    window.Telemetry.addLog("INFO", `Ferry crossing detected (${window.routeFerries.length})`);
-                }
             }
             
             const etaText = etaEl ? etaEl.textContent : '';
@@ -1642,12 +1671,13 @@ async function calculateRouteSansAutoroute(start, end) {
                     strokeWeight: 2
                 }
             });
-            } else if (status === 'ZERO_RESULTS') {
-                speak("Aucun itinéraire trouvé vers cette destination.");
-            } else { 
-                console.error("Routage impossible: " + status);
-                speak("Erreur de calcul d'itinéraire.");
-            }
+            currentRouteMarkers.push(destinationMarker);
+        } else if (status === 'ZERO_RESULTS') {
+            speak("Aucun itinéraire trouvé vers cette destination.");
+        } else { 
+            console.error("Routage impossible: " + status);
+            speak("Erreur de calcul d'itinéraire.");
+        }
     });
 }
 
@@ -1669,13 +1699,17 @@ window.toggleManualStart = function() {
     const box = document.getElementById('manual-start-box');
     box.classList.toggle('hidden');
     if(!box.classList.contains('hidden')) {
-        document.getElementById('route-start').focus();
+        const startEl = document.getElementById('route-start-gmp') || document.getElementById('route-start');
+        startEl.focus();
     }
 }
 
 window.searchDestination = function() {
-    const query = document.getElementById('route-search').value;
-    const startQuery = document.getElementById('route-start').value;
+    const searchEl = document.getElementById('route-search-gmp') || document.getElementById('route-search');
+    const startEl = document.getElementById('route-start-gmp') || document.getElementById('route-start');
+    
+    const query = searchEl.inputValue !== undefined ? searchEl.inputValue : searchEl.value;
+    const startQuery = startEl.inputValue !== undefined ? startEl.inputValue : startEl.value;
     
     if (!query) return;
 
@@ -1769,6 +1803,7 @@ window.saveHazard = function(type) {
 };
 
 function loadHazards() {
+    if (typeof google === 'undefined' || !google.maps || !google.maps.Marker) return;
     const raw = secureGetItem('hazards');
     const hazards = raw ? JSON.parse(raw) : [];
     hazardMarkers.forEach(m => m.setMap(null));
@@ -2450,6 +2485,11 @@ window.showPage = function(page) {
     const overlay = document.getElementById('screen-overlay');
     const content = document.getElementById('screen-content');
     overlay.classList.remove('hidden');
+    content.classList.remove('page-enter-active');
+    content.classList.add('page-enter');
+    setTimeout(() => content.classList.add('page-enter-active'), 50);
+    if(navigator.vibrate) navigator.vibrate(50);
+    setTimeout(() => content.classList.add('page-enter-active'), 50);
     
     if(page === 'stats') {
         content.innerHTML = `<h3><i class="fa-solid fa-chart-line"></i> ${t('stats_title')}</h3>
@@ -2605,6 +2645,35 @@ window.showPage = function(page) {
                 <input type="text" id="arbitre-query" placeholder="Ex: Mon pot est-il homologué ?" style="flex:1; background:#111; color:white; border:1px solid #444; border-radius:20px; padding:10px 15px; font-size:0.9rem;">
                 <button onclick="submitArbitre()" style="background:#ffb703; color:black; border:none; width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center;"><i class="fa-solid fa-paper-plane"></i></button>
             </div>`;
+    } else if(page === 'ia_predictive') {
+        content.innerHTML = <div class="card-insurance" style="border: 2px solid #b700ff; background: rgba(20, 10, 40, 0.9);">
+            <div class="insurance-badge" style="background: #b700ff; color: white;">IA Prédictive & Courtier</div>
+            <h3 style="color: #00d2ff;"><i class="fa-solid fa-microchip"></i> IA Prédictive</h3>
+            <p style="font-size: 0.85rem; color: #ddd; margin-bottom: 15px;">L'IA analyse vos trajets pour anticiper les pannes et optimiser votre conduite 50cc.</p>
+            
+            <div class="glassmorphism" style="padding:15px; margin-bottom:20px; background: rgba(0,0,0,0.4);">
+                <h4 style="color: #ffb703; font-size: 0.9rem; margin-bottom: 10px;"><i class="fa-solid fa-star"></i> Avantages Courtier Partenaire</h4>
+                <ul style="color: #aaa; font-size: 0.8rem; text-align: left; padding-left: 20px;">
+                    <li><strong style="color: #fff;">-20% de réduction</strong> sur votre assurance tous risques grâce à l'IA Prédictive.</li>
+                    <li><strong style="color: #fff;">Garantie panne 0 km</strong> incluse avec dépannage express.</li>
+                    <li><strong style="color: #fff;">Bonus de bonne conduite</strong> (Ride-to-Earn convertible en réductions).</li>
+                </ul>
+                <button class="btn-insurance" style="width:100%; margin-top:10px; background: #ffb703; color: black; font-weight: bold;" onclick="showPage('insurance')">VOIR MON OFFRE ASSURANCE</button>
+            </div>
+
+            <button class="btn-insurance" style="width:100%; background: linear-gradient(135deg, #b700ff, #00d2ff); color: white; font-weight: bold; border: none; padding: 15px; border-radius: 10px;" onclick="PredictiveMeca.checkAlerts(); alert('L'IA analyse vos données de télémétrie actuelles... Aucun risque de serrage moteur détecté pour le moment. Vous roulez de manière optimale !')"><i class="fa-solid fa-bolt"></i> LANCER L'ANALYSE IA</button>
+        </div>;
+    } else if(page === 'profile') {
+        content.innerHTML = <h3><i class="fa-solid fa-user-pen"></i> Mon Profil</h3>
+            <div class="glassmorphism" style="padding:20px; margin-bottom:20px;">
+                <label style="color:#aaa; font-size:0.8rem;">Pseudo :</label>
+                <input type="text" id="edit-username" value="" style="width:100%; padding:10px; margin-top:5px; margin-bottom:15px; background:rgba(255,255,255,0.1); border:1px solid #444; color:#fff; border-radius:8px;">
+                <label style="color:#aaa; font-size:0.8rem;">Modèle de scooter :</label>
+                <input type="text" id="edit-scooter" value="" placeholder="Ex: Peugeot Kisbee 50cc" style="width:100%; padding:10px; margin-top:5px; margin-bottom:15px; background:rgba(255,255,255,0.1); border:1px solid #444; color:#fff; border-radius:8px;">
+                <label style="color:#aaa; font-size:0.8rem;">Email de contact :</label>
+                <input type="email" id="edit-email" value="" placeholder="contact@exemple.com" style="width:100%; padding:10px; margin-top:5px; margin-bottom:20px; background:rgba(255,255,255,0.1); border:1px solid #444; color:#fff; border-radius:8px;">
+                <button onclick="saveProfileInfo()" class="btn-insurance" style="width:100%; background:var(--neon-blue); color:black; font-weight:bold; border:none; padding:12px; border-radius:8px;">ENREGISTRER</button>
+            </div>;
     } else if(page === 'insurance_expert') {
         content.innerHTML = `<h3><i class="fa-solid fa-building-shield"></i> Portail Expert Assurance</h3>
             <p style="font-size:0.8rem; color:#aaa; margin-bottom:20px;">Accès sécurisé pour les compagnies d'assurance et experts judiciaires.</p>
@@ -3777,6 +3846,11 @@ window.showPage = function(page) {
         const content = document.getElementById('screen-content');
         if (!overlay || !content) return;
         overlay.classList.remove('hidden');
+    content.classList.remove('page-enter-active');
+    content.classList.add('page-enter');
+    setTimeout(() => content.classList.add('page-enter-active'), 50);
+    if(navigator.vibrate) navigator.vibrate(50);
+    setTimeout(() => content.classList.add('page-enter-active'), 50);
         content.innerHTML = `<h3><i class="fa-solid fa-wrench"></i> MÃ©cano Ã  la Demande</h3>
             <p style="font-size:0.75rem; color:#aaa; margin-bottom:5px;">Garages certifiÃ©s partenaires â€” accÃ¨s gratuit pour les pilotes.</p>
             <div style="font-size:0.6rem; color:#555; background:rgba(255,183,3,0.05); border:1px solid #333; border-radius:8px; padding:8px; margin-bottom:15px;">
@@ -3790,6 +3864,11 @@ window.showPage = function(page) {
         const content = document.getElementById('screen-content');
         if (!overlay || !content) return;
         overlay.classList.remove('hidden');
+    content.classList.remove('page-enter-active');
+    content.classList.add('page-enter');
+    setTimeout(() => content.classList.add('page-enter-active'), 50);
+    if(navigator.vibrate) navigator.vibrate(50);
+    setTimeout(() => content.classList.add('page-enter-active'), 50);
         
                         window.BlackBoxDict = window.BlackBoxDict || {
             'fr': { 
@@ -4073,3 +4152,40 @@ window.hideVault = function() {
 })();
 
 
+
+ 
+ w i n d o w . s h o w P r e d i c t i v e I A   =   f u n c t i o n ( )   { 
+         i f   ( w i n d o w . s e s s i o n   & &   w i n d o w . s e s s i o n . i s G u e s t )   { 
+                 a l e r t ( ' =��  L ' I A   P r � d i c t i v e   e t   l e s   a v a n t a g e s   c o u r t i e r   s o n t   r � s e r v � s   a u x   m e m b r e s   !   C r � e z   u n   c o m p t e   p o u r   y   a c c � d e r . ' ) ; 
+                 r e t u r n ; 
+         } 
+         s h o w P a g e ( ' i a _ p r e d i c t i v e ' ) ; 
+ } ; 
+ 
+ 
+
+ 
+ w i n d o w . s a v e P r o f i l e I n f o   =   f u n c t i o n ( )   { 
+         c o n s t   n e w U s e r n a m e   =   d o c u m e n t . g e t E l e m e n t B y I d ( ' e d i t - u s e r n a m e ' ) . v a l u e ; 
+         c o n s t   n e w S c o o t e r   =   d o c u m e n t . g e t E l e m e n t B y I d ( ' e d i t - s c o o t e r ' ) . v a l u e ; 
+         c o n s t   n e w E m a i l   =   d o c u m e n t . g e t E l e m e n t B y I d ( ' e d i t - e m a i l ' ) . v a l u e ; 
+         i f   ( n e w U s e r n a m e )   { 
+                 i f   ( w i n d o w . s e s s i o n )   w i n d o w . s e s s i o n . u s e r n a m e   =   n e w U s e r n a m e ; 
+                 l o c a l S t o r a g e . s e t I t e m ( ' u s e r n a m e ' ,   n e w U s e r n a m e ) ; 
+                 c o n s t   d i s p l a y U s e r   =   d o c u m e n t . g e t E l e m e n t B y I d ( ' d i s p l a y - u s e r n a m e ' ) ; 
+                 i f   ( d i s p l a y U s e r )   d i s p l a y U s e r . t e x t C o n t e n t   =   n e w U s e r n a m e ; 
+                 t r y   { 
+                         l e t   s e s s i o n D a t a   =   J S O N . p a r s e ( l o c a l S t o r a g e . g e t I t e m ( ' s e s s i o n ' ) ) ; 
+                         i f ( s e s s i o n D a t a )   { 
+                                 s e s s i o n D a t a . u s e r n a m e   =   n e w U s e r n a m e ; 
+                                 l o c a l S t o r a g e . s e t I t e m ( ' s e s s i o n ' ,   J S O N . s t r i n g i f y ( s e s s i o n D a t a ) ) ; 
+                         } 
+                 }   c a t c h ( e )   { } 
+         } 
+         i f   ( n e w S c o o t e r )   l o c a l S t o r a g e . s e t I t e m ( ' u s e r _ s c o o t e r _ m o d e l ' ,   n e w S c o o t e r ) ; 
+         i f   ( n e w E m a i l )   l o c a l S t o r a g e . s e t I t e m ( ' u s e r _ e m a i l ' ,   n e w E m a i l ) ; 
+         a l e r t ( ' P r o f i l   m i s   �   j o u r   a v e c   s u c c � s   ! ' ) ; 
+         i f   ( t y p e o f   c l o s e S c r e e n   = = =   ' f u n c t i o n ' )   c l o s e S c r e e n ( ) ; 
+ } ; 
+ 
+ 

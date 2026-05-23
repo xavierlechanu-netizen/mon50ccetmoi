@@ -57,15 +57,21 @@ window.Sentinel = {
         const IGNORED_SOURCES = ['firebase', 'gstatic', 'googleapis', 'firebaseio', 'esm2017', 'eventtarget', 'webchannel', 'channelrequest', 'fetchxmlhttp', 'xhrio', 'run.js'];
 
         window.onerror = (msg, url, line) => {
+            const message = String(msg || "").toLowerCase();
+            const urlStr = String(url || "").toLowerCase();
+            
+            if (message.includes("script error")) return true; // Ignore silent cross-origin errors
+            
             // Ignorer les erreurs provenant des libs externes (Firebase, Maps)
-            if (url && IGNORED_SOURCES.some(src => url.includes(src))) return true;
+            if (IGNORED_SOURCES.some(src => urlStr.includes(src) || message.includes(src))) return true;
+            
             this.handleBug("Runtime Error", {msg, url, line});
             return true;
         };
 
         window.onunhandledrejection = (event) => {
             // Ignorer les rejets de promesses Firebase internes
-            const reason = String(event.reason || '');
+            const reason = String(event.reason || '').toLowerCase();
             if (IGNORED_SOURCES.some(src => reason.includes(src))) return;
             this.handleBug("Promise Rejection", event.reason);
         };

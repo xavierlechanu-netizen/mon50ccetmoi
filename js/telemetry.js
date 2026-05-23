@@ -92,10 +92,11 @@ window.Telemetry = {
         if ('geolocation' in navigator) {
             navigator.geolocation.watchPosition(
                 (pos) => {
+                    const acc = pos.coords.accuracy || 0;
                     const gpsStatus = document.getElementById('tel-gps');
-                    if (gpsStatus) gpsStatus.textContent = `FIX (${pos.coords.accuracy.toFixed(1)}m)`;
-                    if (pos.coords.accuracy > 50) {
-                        this.addLog("WARN", `Low GPS Accuracy: ${pos.coords.accuracy}m`);
+                    if (gpsStatus) gpsStatus.textContent = `FIX (${acc.toFixed(1)}m)`;
+                    if (acc > 50) {
+                        this.addLog("WARN", `Low GPS Accuracy: ${acc}m`);
                     }
                 },
                 (err) => {
@@ -136,8 +137,14 @@ window.Telemetry = {
         if ('getBattery' in navigator) {
             navigator.getBattery().then(battery => {
                 const update = () => {
+                    const levelStr = `${Math.round(battery.level * 100)}%`;
+                    const iconStr = battery.charging ? ' ⚡' : '';
+                    
                     const batEl = document.getElementById('tel-bat');
-                    if (batEl) batEl.textContent = `${Math.round(battery.level * 100)}% ${battery.charging ? '⚡' : ''}`;
+                    if (batEl) batEl.textContent = levelStr + iconStr;
+                    
+                    const hudBatEl = document.getElementById('hud-bat');
+                    if (hudBatEl) hudBatEl.textContent = levelStr + iconStr;
                 };
                 battery.addEventListener('levelchange', update);
                 battery.addEventListener('chargingchange', update);
@@ -167,3 +174,71 @@ window.Telemetry = {
 
 // Auto-start on load
 window.addEventListener('load', () => window.Telemetry.init());
+
+/* --- ULTRA PREMIUM TELEMETRY & AR MODULE --- */
+
+// 1. AR Vision Mode
+window.isARMode = false;
+window.toggleARMode = async function() {
+    const videoObj = document.getElementById('ar-camera-feed');
+    const mapContainer = document.getElementById('map');
+    const arBtn = document.getElementById('btn-ar-toggle');
+    
+    if(!window.isARMode) {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+            if(videoObj) {
+                videoObj.srcObject = stream;
+                videoObj.classList.remove('hidden');
+                videoObj.play();
+            }
+            if(mapContainer) mapContainer.style.opacity = '0.3'; // Semi-transparent map overlay
+            if(arBtn) arBtn.style.color = '#ff0055';
+            window.isARMode = true;
+            if(typeof speak === 'function') speak('Réalité Augmentée activée.');
+        } catch(err) {
+            console.error('AR Camera error:', err);
+            alert("Impossible d'accéder à la caméra pour le mode AR.");
+        }
+    } else {
+        if(videoObj && videoObj.srcObject) {
+            videoObj.srcObject.getTracks().forEach(track => track.stop());
+            videoObj.classList.add('hidden');
+        }
+        if(mapContainer) mapContainer.style.opacity = '1';
+        if(arBtn) arBtn.style.color = '#fff';
+        window.isARMode = false;
+        if(typeof speak === 'function') speak('Réalité Augmentée désactivée.');
+    }
+};
+
+// 2. Gyroscope / Lean Angle (Horizon Artificiel)
+window.initAdvancedTelemetry = function() {
+    const horizonLine = document.getElementById('lean-angle-horizon');
+    const leanText = document.getElementById('lean-angle-text');
+    
+    if(window.DeviceOrientationEvent) {
+        window.addEventListener('deviceorientation', function(event) {
+            // gamma is the left-to-right tilt in degrees, where right is positive
+            let lean = event.gamma; 
+            if(lean === null) return;
+            
+            // Limit tilt display between -60 and +60 degrees
+            if(lean > 60) lean = 60;
+            if(lean < -60) lean = -60;
+            
+            if(horizonLine) {
+                horizonLine.style.transform = 'rotate(' + lean + 'deg)';
+            }
+            if(leanText) {
+                leanText.textContent = Math.abs(Math.round(lean)) + '°';
+                if(Math.abs(lean) > 40) leanText.style.color = '#ff0055';
+                else leanText.style.color = '#00d2ff';
+            }
+        });
+    }
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(window.initAdvancedTelemetry, 2000);
+});

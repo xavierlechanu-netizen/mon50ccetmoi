@@ -1,4 +1,4 @@
-﻿:root {
+:root {
     --neon-blue: #00f2ff;
     --neon-gold: #ffb700;
     --neon-red: #ff0055;
@@ -3283,6 +3283,39 @@ body.shadow-mode .tactical-speed-val {
 }
 
 
+/*   LITIGATION & INSURANCE PORTAL
+   ========================================================================== */
+
+/* GUARDIAN ANGEL HALO */
+.guardian-halo {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none;
+    z-index: 1000;
+    box-shadow: inset 0 0 100px rgba(0, 210, 255, 0.3);
+    animation: pulse-halo 3s infinite alternate;
+}
+.guardian-halo.hidden {
+    display: none;
+}
+@keyframes pulse-halo {
+    from { box-shadow: inset 0 0 50px rgba(0, 210, 255, 0.1); }
+    to { box-shadow: inset 0 0 150px rgba(0, 210, 255, 0.5); }
+}
+.t-nav-btn.active#btn-guardian-toggle {
+    color: #00d2ff;
+    text-shadow: 0 0 15px rgba(0,210,255,0.8);
+}
+.t-nav-btn.active#btn-guardian-toggle i {
+    animation: guardian-pulse-icon 2s infinite alternate;
+}
+@keyframes guardian-pulse-icon {
+    from { transform: scale(1); }
+    to { transform: scale(1.2); }
+}
+
+/* ========================================================================== */
+
 /* --- INSURANCE PORTAL STYLES --- */
 .insurance-portal-container {
     padding: 20px;
@@ -3438,4 +3471,382 @@ body.shadow-mode .tactical-speed-val {
     color: #e74c3c;
     font-weight: bold;
 }
+
+/* ═══════════════════════════════════════════════════════════
+   REVOLUT BADGE + OPTION LITIGE IA
+   ═══════════════════════════════════════════════════════════ */
+.revolut-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(124, 77, 255, 0.15);
+    border: 1px solid rgba(124, 77, 255, 0.4);
+    border-radius: 20px;
+    padding: 2px 8px;
+    font-size: 0.65rem;
+    color: #b39ddb;
+    margin-top: 4px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.payment-option-litigation {
+    border-color: rgba(124, 77, 255, 0.5) !important;
+    background: rgba(124, 77, 255, 0.06) !important;
+}
+
+.payment-option-litigation:hover {
+    border-color: #7c4dff !important;
+    background: rgba(124, 77, 255, 0.14) !important;
+    box-shadow: 0 0 20px rgba(124, 77, 255, 0.2);
+}
+
+.payment-option-litigation .option-icon { color: #7c4dff !important; }
+.payment-option-litigation .option-price { color: #7c4dff !important; }
+
+/* ═══════════════════════════════════════════════════════════
+   PORTAIL LITIGE IA — LitigationAI
+   ═══════════════════════════════════════════════════════════ */
+.litigation-portal {
+    padding: 20px;
+    color: #fff;
+    max-width: 480px;
+    margin: 0 auto;
+}
+
+.litigation-header { text-align: center; margin-bottom: 24px; }
+.litigation-header h3 { margin: 10px 0 6px; font-size: 1.2rem; letter-spacing: 1px; }
+.litigation-sub { color: #888; font-size: 0.8rem; line-height: 1.5; }
+
+.litigation-icon-pulse {
+    font-size: 2.5rem;
+    color: #7c4dff;
+    animation: icon-pulse 2s ease-in-out infinite;
+}
+
+@keyframes icon-pulse {
+    0%, 100% { filter: drop-shadow(0 0 4px rgba(124,77,255,0.4)); }
+    50%       { filter: drop-shadow(0 0 16px rgba(124,77,255,0.9)); }
+}
+
+.litigation-checklist {
+    background: rgba(124, 77, 255, 0.06);
+    border: 1px solid rgba(124, 77, 255, 0.25);
+    border-radius: 14px;
+    padding: 16px 18px;
+    margin-bottom: 22px;
+}
+
+.check-item {
+    font-size: 0.8rem;
+    color: #bbb;
+    padding: 5px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.check-item i { color: #00e676; font-size: 0.85rem; flex-shrink: 0; }
+
+.litigation-actions { display: flex; flex-direction: column; gap: 10px; }
+
+.btn-litigation-start {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #7c4dff, #651fff);
+    border: none;
+    border-radius: 12px;
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 20px rgba(124,77,255,0.35);
+}
+
+.btn-litigation-start:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 28px rgba(124,77,255,0.55);
+}
+
+.btn-litigation-send {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #00c853, #00e676);
+    border: none;
+    border-radius: 12px;
+    color: #000;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 20px rgba(0,200,83,0.3);
+}
+
+.btn-litigation-send:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 28px rgba(0,200,83,0.5);
+}
+
+.btn-close-litigation {
+    width: 100%;
+    padding: 10px;
+    background: transparent;
+    border: 1px solid #444;
+    border-radius: 10px;
+    color: #777;
+    font-size: 0.8rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s;
+}
+
+.btn-close-litigation:hover { border-color: #666; color: #aaa; }
+
+/* Analyse en cours */
+.litigation-analyzing { text-align: center; padding: 40px 20px; }
+.ai-spinner i { font-size: 3rem; color: #7c4dff; margin-bottom: 20px; }
+
+.ai-progress-bar {
+    width: 100%;
+    height: 4px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 20px 0 10px;
+}
+
+.ai-progress-fill {
+    height: 100%;
+    width: 10%;
+    background: linear-gradient(90deg, #7c4dff, #00e5ff);
+    border-radius: 4px;
+    transition: width 0.6s ease;
+}
+
+.ai-status-text {
+    font-size: 0.75rem;
+    color: #666;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.5px;
+}
+
+.case-code-display { font-size: 0.85rem; color: #aaa; margin: 10px 0; }
+
+/* Résultat */
+.litigation-result-header { text-align: center; margin-bottom: 20px; }
+.litigation-result-header h3 { margin-top: 10px; font-size: 1.1rem; }
+
+.case-code-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid #333;
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-bottom: 18px;
+    font-size: 0.8rem;
+    color: #aaa;
+    flex-wrap: wrap;
+}
+
+.case-code-badge strong {
+    color: #fff;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    flex: 1;
+}
+
+.btn-copy-code {
+    background: rgba(124,77,255,0.15);
+    border: 1px solid rgba(124,77,255,0.3);
+    color: #7c4dff;
+    border-radius: 6px;
+    width: 28px;
+    height: 28px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.btn-copy-code:hover { background: rgba(124,77,255,0.3); }
+
+.report-recommendation {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    background: rgba(124,77,255,0.08);
+    border: 1px solid rgba(124,77,255,0.3);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 18px;
+}
+
+.report-icon { font-size: 2rem; flex-shrink: 0; margin-top: 2px; }
+.report-info strong { display: block; font-size: 0.75rem; color: #888; margin-bottom: 4px; }
+.report-label { display: block; font-size: 1rem; font-weight: 700; color: #fff; margin-bottom: 6px; }
+.report-desc { font-size: 0.72rem; color: #777; line-height: 1.4; margin: 0; }
+
+.severity-block { margin-bottom: 18px; }
+.severity-title { font-size: 0.75rem; color: #888; display: block; margin-bottom: 8px; }
+
+.severity-bar-bg {
+    height: 6px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 6px;
+}
+
+.severity-bar-fill { height: 100%; border-radius: 6px; transition: width 1s ease; }
+
+.severity-score {
+    font-size: 0.8rem;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.telemetry-summary {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 18px;
+}
+
+.tele-item {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid #2a2a2a;
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 0.73rem;
+    color: #888;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.tele-item i { color: var(--neon-blue); font-size: 0.8rem; flex-shrink: 0; }
+.tele-item strong { color: #ddd; }
+
+.litigation-disclaimer {
+    font-size: 0.7rem;
+    color: #555;
+    line-height: 1.5;
+    margin-bottom: 18px;
+    padding: 10px 12px;
+    background: rgba(255,255,255,0.02);
+    border-radius: 8px;
+    border-left: 3px solid #444;
+}
+
+.litigation-disclaimer i { color: #7c4dff; margin-right: 5px; }
+
+.litigation-sending,
+.litigation-success,
+.litigation-error { text-align: center; padding: 40px 20px; }
+
+.litigation-success h3 { color: #00e676; }
+.litigation-error  h3 { color: #ff4d4d; }
+
+.sim-notice {
+    font-size: 0.7rem;
+    color: #666;
+    margin-top: 10px;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   REVOLUT CHECKOUT MODALS
+   ═══════════════════════════════════════════════════════════ */
+.revolut-pay-header {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.revolut-pay-header h3 {
+    margin: 12px 0 6px;
+    font-size: 1.2rem;
+    letter-spacing: 0.5px;
+}
+
+.revolut-logo-ring {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: rgba(124, 77, 255, 0.12);
+    border: 2px solid rgba(124, 77, 255, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 4px;
+    box-shadow: 0 0 24px rgba(124, 77, 255, 0.25);
+    animation: revolut-ring-pulse 2.5s ease-in-out infinite;
+}
+
+@keyframes revolut-ring-pulse {
+    0%, 100% { box-shadow: 0 0 14px rgba(124,77,255,0.25); }
+    50%       { box-shadow: 0 0 32px rgba(124,77,255,0.55); }
+}
+
+.revolut-amount-badge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: rgba(124, 77, 255, 0.08);
+    border: 1px solid rgba(124, 77, 255, 0.35);
+    border-radius: 16px;
+    padding: 18px 24px;
+    margin: 0 0 4px;
+    text-align: center;
+}
+
+.revolut-amount-value {
+    font-size: 2.4rem;
+    font-weight: 900;
+    color: #fff;
+    letter-spacing: -1px;
+    line-height: 1;
+}
+
+.revolut-amount-label {
+    font-size: 0.72rem;
+    color: #888;
+    margin-top: 8px;
+    line-height: 1.4;
+}
+
+.revolut-progress {
+    background: linear-gradient(90deg, #7c4dff, #651fff, #00b0ff) !important;
+    background-size: 200% !important;
+    animation: revolut-shimmer 1.5s linear infinite !important;
+}
+
+@keyframes revolut-shimmer {
+    0%   { background-position: 200% center; }
+    100% { background-position: -200% center; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   FIRESTORE RULES — Rappel visuel (commentaire CSS)
+   Collection : payment_confirmations  → lecture userId uniquement
+   Collection : revolut_orders         → lecture/écriture Functions
+   Collection : litigation_proposals   → lecture userId uniquement
+   ═══════════════════════════════════════════════════════════ */
 

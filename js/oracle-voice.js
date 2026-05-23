@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ORACLE VOICE ENGINE - Voice Recognition & Commands (PHASE SINGULARITY)
  * Permet au pilote de contrôler l'app sans lâcher le guidon.
  */
@@ -152,6 +152,23 @@ class OracleVoice {
         else if (text.includes("sos") || text.includes("secours") || text.includes("urgence") || text.includes("accident")) {
             speak("Activation du protocole SOS. Restez immobile.");
             if (window.SOSEmergency) window.SOSEmergency.trigger();
+        }
+        // ── Premium / Mode ─────────────────────────────────────────
+        else if (text.includes("mode jour") || text.includes("thème clair")) {
+            document.body.classList.add('day-mode');
+            speak("Mode jour activé. Conduisez prudemment avec ce soleil.");
+        }
+        else if (text.includes("mode nuit") || text.includes("thème sombre")) {
+            document.body.classList.remove('day-mode');
+            speak("Mode nuit activé. Interface tactique restaurée.");
+        }
+        else if (text.includes("mon xp") || text.includes("mon niveau")) {
+            const xp = window.session?.xp || 0;
+            speak("Vous avez  points d'expérience. Continuez à rouler pour passer au niveau supérieur !");
+        }
+        else if (text.includes("il pleut") || text.includes("météo détaillée")) {
+            if(typeof window.updateWeatherUI === 'function') window.updateWeatherUI(true);
+            speak("Pluie détectée. J'adapte l'affichage et je modifie les paramètres d'adhérence virtuels.");
         }
         // ── Aide ───────────────────────────────────────────────────
         else if (text.includes("aide") || text.includes("commande") || text.includes("que peux") || text.includes("que sais")) {

@@ -225,11 +225,15 @@ window.checkAuth = function(requireAdmin = false) {
 if (typeof firebase !== 'undefined' && firebase.auth()) {
     firebase.auth().onAuthStateChanged(async (user) => {
         if (user) {
-            const doc = await firebase.firestore().collection("users").doc(user.uid).get();
-            if (doc.exists) {
-                const profile = doc.data();
-                secureSetItem('session', JSON.stringify({ ...profile, uid: user.uid }));
-                window.session = profile;
+            try {
+                const doc = await firebase.firestore().collection("users").doc(user.uid).get();
+                if (doc.exists) {
+                    const profile = doc.data();
+                    secureSetItem('session', JSON.stringify({ ...profile, uid: user.uid }));
+                    window.session = profile;
+                }
+            } catch (err) {
+                console.warn("Firestore sync failed:", err);
             }
         }
     });

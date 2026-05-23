@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="fr-FR" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Portail Expert | mon50ccetmoi</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <script src="https://merchant.revolut.com/embed.js" async></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    
+    <script src="js/config.js"></script>
+    <script src="js/database.js"></script>
+    
+    <style>
+        body {
+            margin: 0; padding: 0;
+            font-family: 'Inter', sans-serif;
+            background: #f4f7f6;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            padding: 40px;
+            box-sizing: border-box;
+        }
+        h1 {
+            color: #0056b3;
+            text-align: center;
+            margin-bottom: 5px;
+        }
+        p.subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+        .search-box input {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .search-box input:focus {
+            border-color: #0056b3;
+        }
+        .search-box button {
+            background: #0056b3;
+            color: white;
+            border: none;
+            padding: 0 25px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .search-box button:hover {
+            background: #003d82;
+        }
+        
+        .report-options {
+            display: none;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .report-card {
+            border: 2px solid #eee;
+            border-radius: 8px;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .report-card:hover {
+            border-color: #0056b3;
+            background: #f8fbff;
+        }
+        .report-card.selected {
+            border-color: #00d2ff;
+            background: #e6f9ff;
+            box-shadow: 0 4px 15px rgba(0,210,255,0.2);
+        }
+        .report-info h3 {
+            margin: 0 0 5px 0;
+            font-size: 1.2rem;
+            color: #333;
+        }
+        .report-info p {
+            margin: 0;
+            font-size: 0.9rem;
+            color: #666;
+        }
+        .report-price {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #0056b3;
+        }
+        
+        .btn-pay {
+            display: none;
+            width: 100%;
+            padding: 15px;
+            background: #000;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-top: 20px;
+            cursor: pointer;
+        }
+        .btn-pay:hover {
+            background: #222;
+        }
+        
+        .status-msg {
+            text-align: center;
+            margin-top: 15px;
+            font-weight: 600;
+        }
+        .error { color: #dc3545; }
+        .success { color: #28a745; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1><i class="fa-solid fa-shield-halved"></i> Portail Expert</h1>
+        <p class="subtitle">Accès sécurisé aux rapports Blackbox certifiés.</p>
+        
+        <div class="search-box">
+            <input type="text" id="input-case-code" placeholder="Ex: LITIGE-XXXXXX" onkeyup="if(event.key === 'Enter') searchCase()">
+            <button onclick="searchCase()"><i class="fa-solid fa-search"></i> Rechercher</button>
+        </div>
+        
+        <div id="status-display" class="status-msg"></div>
+
+        <div id="report-options" class="report-options">
+            <div class="report-card" onclick="selectReport('SIMPLE', 49.90)">
+                <div class="report-info">
+                    <h3>Rapport Simple</h3>
+                    <p>Télémétrie de base (Vitesse, GPS).</p>
+                </div>
+                <div class="report-price">49.90€</div>
+            </div>
+            
+            <div class="report-card" onclick="selectReport('INTERMEDIAIRE', 89.99)">
+                <div class="report-info">
+                    <h3>Rapport Intermédiaire</h3>
+                    <p>Détection de choc, G-Force et inclinaison.</p>
+                </div>
+                <div class="report-price">89.99€</div>
+            </div>
+            
+            <div class="report-card selected" onclick="selectReport('EXPERT', 149.99)">
+                <div class="report-info">
+                    <h3>Expertise Complète</h3>
+                    <p>Replay 3D certifié, signature SHA-256 et données HF.</p>
+                </div>
+                <div class="report-price">149.99€</div>
+            </div>
+            
+            <button id="btn-pay" class="btn-pay" onclick="payReport()">
+                Payer par virement (Revolut) <span id="btn-price">149.99€</span>
+            </button>
+        </div>
+    </div>
+
+    <script src="js/assureur.js"></script>
+
+</body>
+</html>
